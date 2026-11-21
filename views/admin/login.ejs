@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Admin Sign In — TechHaven US</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body style="display:grid;place-items:center;min-height:100vh;padding:1.25rem;background:#0f172a;">
+  <div class="card" style="width:min(420px, 100%);padding:2rem;">
+    <div style="display:flex;align-items:center;gap:0.7rem;margin-bottom:1.25rem;">
+      <div class="admin-brand-dot" style="color:#fff;">T</div>
+      <div>
+        <h1 style="margin:0;font-size:1.3rem;">TechHaven US CMS</h1>
+        <div style="font-size:0.82rem;color:#64748b;">Editorial, Auto-WebP, SEO &amp; AdSense Control</div>
+      </div>
+    </div>
+
+    <% if (error) { %>
+    <div class="alert alert-error"><%= error %></div>
+    <% } %>
+
+    <form action="/admin/login" method="POST">
+      <div class="field">
+        <label for="loginEmail">Admin Email</label>
+        <input id="loginEmail" type="email" name="email" value="<%= email %>" required autocomplete="email" placeholder="admin@techhavenus.com">
+      </div>
+      <div class="field">
+        <label for="loginPass">Password</label>
+        <input id="loginPass" type="password" name="password" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;padding:0.7rem;">Sign In to Admin Panel</button>
+    </form>
+
+    <div style="margin-top:1.15rem;text-align:center;font-size:0.84rem;color:#64748b;">
+      <a href="/" style="color:#2563eb;font-weight:600;">&larr; Return to TechHaven US</a>
+    </div>
+  </div>
+</body>
+</html>

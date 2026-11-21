@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+  <title>AI Tools Directory Manager — TechHaven CMS</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+<div class="admin-shell">
+  <%- include('./sidebar') %>
+
+  <main class="admin-main">
+    <div class="admin-header">
+      <div><h1>AI Tools Directory Manager</h1></div>
+      <a href="/ai-tools" target="_blank" class="btn btn-outline">View Public Directory &rarr;</a>
+    </div>
+
+    <% if (flash) { %><div class="alert alert-success"><%= flash %></div><% } %>
+
+    <div class="admin-split-side">
+      <section class="card" id="aiToolFormCard">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;margin-bottom:0.85rem;">
+          <h2 id="aiToolFormHeading" style="margin:0;font-size:1.05rem;">Add New AI Tool</h2>
+          <button type="button" id="aiToolCancelEdit" class="btn btn-outline btn-sm" style="display:none;">Cancel Edit</button>
+        </div>
+        <form id="aiToolForm" action="/admin/ai-tools" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="hidden" id="aiToolId" name="id" value="">
+
+          <div class="field"><label for="aiToolName">Tool Name</label><input id="aiToolName" type="text" name="name" required placeholder="e.g., Claude 3.7 Sonnet, Cursor AI, Midjourney"></div>
+          <div class="field"><label for="aiToolSlug">Slug (optional — auto-generated)</label><input id="aiToolSlug" type="text" name="slug" placeholder="auto-generated-from-name"></div>
+          <div class="field"><label for="aiToolTagline">Short Tagline (Card Summary)</label><input id="aiToolTagline" type="text" name="tagline" required placeholder="1-line summary shown on directory cards..."></div>
+          <div class="field">
+            <label for="aiToolDesc">Detailed Description &amp; Full Review</label>
+            <textarea id="aiToolDesc" name="description" rows="6" placeholder="Write a detailed description, key features, real-world benchmark notes, and who this AI tool is best for..."></textarea>
+          </div>
+
+          <div class="field">
+            <label>Tool Logo / Screenshot Image (Auto-WebP)</label>
+            <div class="img-spec-hint">
+              <strong>Recommended Size:</strong> <code>400 × 400 px</code> (1:1 Square Logo) or <code>800 × 450 px</code> (16:9 Cover/Screenshot) — Auto-converts PNG/JPG/WebP to optimized WebP.
+            </div>
+            <div id="aiToolDropzone" class="dropzone" style="padding:0.85rem;margin-bottom:0.55rem;">
+              <input id="aiToolFileInput" type="file" accept="image/*" style="display:none;">
+              <div style="font-weight:700;font-size:0.85rem;">Drop Logo / Image here or click to upload</div>
+              <div style="font-size:0.74rem;color:#64748b;">Recommended 400 × 400 px or 800 × 450 px • Auto-WebP</div>
+            </div>
+            <div id="aiToolUploadStatus" style="font-size:0.78rem;margin-bottom:0.5rem;color:#1e293b;"></div>
+            <div id="aiToolImgPreviewWrap" style="display:none;margin-bottom:0.65rem;">
+              <div style="display:flex;align-items:center;gap:0.75rem;">
+                <img id="aiToolImgPreview" src="" alt="Tool Logo Preview" style="width:64px;height:64px;object-fit:cover;border-radius:12px;border:1px solid #e2e8f0;background:#f8fafc;">
+                <button type="button" id="aiToolRemoveImgBtn" class="btn btn-outline btn-sm">Remove Image</button>
+              </div>
+            </div>
+            <input id="aiToolImageUrl" type="text" name="image_url" placeholder="/uploads/... (auto-filled on upload or paste image URL)" style="font-size:0.82rem;">
+          </div>
+
+          <div class="admin-grid-2">
+            <div class="field"><label for="aiToolCat">Category</label><input id="aiToolCat" type="text" name="category" value="AI Assistant"></div>
+            <div class="field"><label for="aiToolPricing">Pricing Model</label>
+              <select id="aiToolPricing" name="pricing_model"><option value="Freemium">Freemium</option><option value="Free">Free</option><option value="Paid">Paid</option></select>
+            </div>
+          </div>
+          <div class="admin-grid-2">
+            <div class="field"><label for="aiToolPriceLabel">Price Label</label><input id="aiToolPriceLabel" type="text" name="price_label" value="Free / $20 mo"></div>
+            <div class="field"><label for="aiToolRating">Rating (1-5)</label><input id="aiToolRating" type="number" step="0.1" min="1" max="5" name="rating" value="4.7"></div>
+          </div>
+          <div class="admin-grid-2">
+            <div class="field"><label for="aiToolWebsite">Official Website URL</label><input id="aiToolWebsite" type="url" name="website_url" placeholder="https://..."></div>
+            <div class="field"><label for="aiToolColor">Fallback Badge Color</label><input id="aiToolColor" type="color" name="logo_color" value="#2563EB" style="height:38px;padding:0.2rem;"></div>
+          </div>
+          <div class="field"><label for="aiToolPros">Pros (one point per line)</label><textarea id="aiToolPros" name="pros" rows="3" placeholder="Fast response speed&#10;Generous free tier"></textarea></div>
+          <div class="field"><label for="aiToolCons">Cons (one point per line)</label><textarea id="aiToolCons" name="cons" rows="3" placeholder="Rate limits on peak hours"></textarea></div>
+          <div class="field"><label style="justify-content:flex-start;gap:0.4rem;cursor:pointer;"><input id="aiToolFeatured" type="checkbox" name="is_featured" value="1"> Featured Tool</label></div>
+          <button type="submit" id="aiToolSubmitBtn" class="btn btn-primary" style="width:100%;">Save AI Tool</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2 style="margin:0 0 0.85rem;font-size:1.05rem;">Directory Entries (<%= tools.length %>)</h2>
+        <div class="table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Tool</th><th>Category</th><th>Pricing</th><th>Rating</th><th>Action</th></tr></thead>
+            <tbody>
+              <% tools.forEach(function(t) { %>
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:0.65rem;">
+                    <% if (t.image_url) { %>
+                    <img src="<%= t.image_url %>" alt="<%= t.name %>" class="ai-tool-thumb">
+                    <% } else { %>
+                    <div class="ai-tool-fallback-badge" data-bg="<%= t.logo_color || '#2563EB' %>"><%= t.name.slice(0, 1) %></div>
+                    <% } %>
+                    <div>
+                      <strong><%= t.name %></strong>
+                      <div style="font-size:0.78rem;color:#64748b;"><%= t.tagline %></div>
+                    </div>
+                  </div>
+                </td>
+                <td><%= t.category %></td>
+                <td><%= t.price_label %></td>
+                <td><%- icon('star', 14) %> <%= t.rating %></td>
+                <td>
+                  <div style="display:flex;gap:0.4rem;align-items:center;">
+                    <button
+                      type="button"
+                      class="btn btn-outline btn-sm js-edit-ai-tool"
+                      data-tool="<%= JSON.stringify({
+                        id: t.id,
+                        name: t.name || '',
+                        slug: t.slug || '',
+                        tagline: t.tagline || '',
+                        description: t.description || '',
+                        category: t.category || 'AI Assistant',
+                        pricing_model: t.pricing_model || 'Freemium',
+                        price_label: t.price_label || '',
+                        rating: t.rating || 4.7,
+                        website_url: t.website_url || '',
+                        logo_color: t.logo_color || '#2563EB',
+                        image_url: t.image_url || '',
+                        is_featured: Boolean(t.is_featured),
+                        pros_text: Array.isArray(t.pros) ? t.pros.join('\n') : '',
+                        cons_text: Array.isArray(t.cons) ? t.cons.join('\n') : ''
+                      }) %>"
+                    >Edit</button>
+                    <a href="/ai-tools/<%= t.slug %>" target="_blank" class="btn btn-outline btn-sm">View</a>
+                    <form action="/admin/ai-tools/<%= t.id %>/delete" method="POST" onsubmit="return confirm('Delete this AI tool?');">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+<script>
+(function () {
+  var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+  var csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '';
+  var form = document.getElementById('aiToolForm');
+  var heading = document.getElementById('aiToolFormHeading');
+  var cancelBtn = document.getElementById('aiToolCancelEdit');
+  var submitBtn = document.getElementById('aiToolSubmitBtn');
+  var idEl = document.getElementById('aiToolId');
+  var nameEl = document.getElementById('aiToolName');
+  var slugEl = document.getElementById('aiToolSlug');
+  var taglineEl = document.getElementById('aiToolTagline');
+  var descEl = document.getElementById('aiToolDesc');
+  var catEl = document.getElementById('aiToolCat');
+  var pricingEl = document.getElementById('aiToolPricing');
+  var priceLabelEl = document.getElementById('aiToolPriceLabel');
+  var ratingEl = document.getElementById('aiToolRating');
+  var webEl = document.getElementById('aiToolWebsite');
+  var colorEl = document.getElementById('aiToolColor');
+  var imgUrlEl = document.getElementById('aiToolImageUrl');
+  var imgWrap = document.getElementById('aiToolImgPreviewWrap');
+  var imgPreview = document.getElementById('aiToolImgPreview');
+  var removeImgBtn = document.getElementById('aiToolRemoveImgBtn');
+  var prosEl = document.getElementById('aiToolPros');
+  var consEl = document.getElementById('aiToolCons');
+  var featEl = document.getElementById('aiToolFeatured');
+  var dropzone = document.getElementById('aiToolDropzone');
+  var fileInput = document.getElementById('aiToolFileInput');
+  var uploadStatus = document.getElementById('aiToolUploadStatus');
+
+  function syncImagePreview(url) {
+    var clean = String(url || '').trim();
+    if (clean) {
+      imgPreview.src = clean;
+      imgWrap.style.display = 'block';
+    } else {
+      imgPreview.src = '';
+      imgWrap.style.display = 'none';
+    }
+  }
+
+  if (imgUrlEl) {
+    imgUrlEl.addEventListener('input', function () {
+      syncImagePreview(imgUrlEl.value);
+    });
+  }
+
+  if (removeImgBtn) {
+    removeImgBtn.addEventListener('click', function () {
+      imgUrlEl.value = '';
+      syncImagePreview('');
+      if (uploadStatus) uploadStatus.textContent = '';
+    });
+  }
+
+  async function handleFileUpload(file) {
+    if (!file) return;
+    if (uploadStatus) uploadStatus.textContent = 'Converting ' + file.name + ' to WebP...';
+    try {
+      var fd = new FormData();
+      fd.append('image', file);
+      fd.append('watermark', '0');
+      fd.append('title', nameEl && nameEl.value ? nameEl.value + ' Logo' : file.name);
+      fd.append('alt_text', nameEl && nameEl.value ? nameEl.value : file.name);
+      var res = await fetch('/admin/api/media/upload', {
+        method: 'POST',
+        headers: { 'x-csrf-token': csrfToken },
+        body: fd
+      });
+      var data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || 'Upload failed');
+      imgUrlEl.value = data.item.url;
+      syncImagePreview(data.item.url);
+      if (uploadStatus) {
+        uploadStatus.innerHTML = '<span class="badge badge-webp">Auto-WebP Ready</span> ' + data.item.width + '×' + data.item.height + ' px';
+      }
+    } catch (err) {
+      if (uploadStatus) uploadStatus.textContent = 'Error: ' + err.message;
+    }
+  }
+
+  if (dropzone && fileInput) {
+    dropzone.addEventListener('click', function () { fileInput.click(); });
+    fileInput.addEventListener('change', function (e) { handleFileUpload(e.target.files[0]); });
+    dropzone.addEventListener('dragover', function (e) { e.preventDefault(); dropzone.classList.add('dragover'); });
+    dropzone.addEventListener('dragleave', function () { dropzone.classList.remove('dragover'); });
+    dropzone.addEventListener('drop', function (e) {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      if (e.dataTransfer.files[0]) handleFileUpload(e.dataTransfer.files[0]);
+    });
+  }
+
+  document.querySelectorAll('.ai-tool-fallback-badge[data-bg]').forEach(function (el) {
+    el.style.backgroundColor = el.getAttribute('data-bg') || '#2563EB';
+  });
+
+  document.querySelectorAll('.js-edit-ai-tool').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      try {
+        var t = JSON.parse(btn.getAttribute('data-tool'));
+        idEl.value = t.id || '';
+        nameEl.value = t.name || '';
+        slugEl.value = t.slug || '';
+        taglineEl.value = t.tagline || '';
+        descEl.value = t.description || '';
+        catEl.value = t.category || 'AI Assistant';
+        pricingEl.value = t.pricing_model || 'Freemium';
+        priceLabelEl.value = t.price_label || '';
+        ratingEl.value = t.rating || 4.7;
+        webEl.value = t.website_url || '';
+        colorEl.value = /^#[0-9a-fA-F]{6}$/.test(t.logo_color || '') ? t.logo_color : '#2563EB';
+        imgUrlEl.value = t.image_url || '';
+        syncImagePreview(t.image_url || '');
+        prosEl.value = t.pros_text || '';
+        consEl.value = t.cons_text || '';
+        featEl.checked = Boolean(t.is_featured);
+        heading.textContent = 'Edit AI Tool: ' + t.name;
+        submitBtn.textContent = 'Update AI Tool';
+        cancelBtn.style.display = 'inline-flex';
+        document.getElementById('aiToolFormCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (e) {}
+    });
+  });
+
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', function () {
+      form.reset();
+      idEl.value = '';
+      imgUrlEl.value = '';
+      syncImagePreview('');
+      if (uploadStatus) uploadStatus.textContent = '';
+      heading.textContent = 'Add New AI Tool';
+      submitBtn.textContent = 'Save AI Tool';
+      cancelBtn.style.display = 'none';
+    });
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+  <title>Analytics — TechHaven CMS</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+<div class="admin-shell">
+  <%- include('./sidebar') %>
+
+  <main class="admin-main">
+    <div class="admin-header">
+      <div>
+        <h1>Audience, Country &amp; Search Analytics</h1>
+        <div style="font-size:0.88rem;color:#64748b;">Top articles, US/Europe reader traffic, helpfulness engagement, search queries, and newsletter conversion sources.</div>
+      </div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="card" style="margin-bottom:0;">
+        <div class="kpi-label">Total Views</div>
+        <div class="kpi-val"><%= (engagementTotals.views_total || 0).toLocaleString('en-US') %></div>
+      </div>
+      <div class="card" style="margin-bottom:0;">
+        <div class="kpi-label">Helpful Votes</div>
+        <div class="kpi-val"><%= engagementTotals.yes_total || 0 %> <%- icon('thumbs-up', 22) %></div>
+        <div class="kpi-sub"><%= engagementTotals.no_total || 0 %> not helpful</div>
+      </div>
+      <div class="card" style="margin-bottom:0;">
+        <div class="kpi-label">Article Bookmarks</div>
+        <div class="kpi-val"><%= engagementTotals.saves_total || 0 %> <%- icon('bookmark', 22) %></div>
+      </div>
+    </div>
+
+    <div class="admin-split-2">
+      <section class="card">
+        <h2 style="margin:0 0 0.85rem;font-size:1.05rem;">Top Articles by Views &amp; Engagement</h2>
+        <div class="table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Title</th><th>Views</th><th>Helpful</th><th>Saves</th></tr></thead>
+            <tbody>
+              <% topArticles.forEach(function(a) { %>
+              <tr>
+                <td><a href="/article/<%= a.slug %>" target="_blank" style="font-weight:600;"><%= a.title %></a></td>
+                <td><%= a.views %></td>
+                <td><%= a.helpful_yes %> <%- icon('thumbs-up', 14) %> / <%= a.helpful_no %> <%- icon('thumbs-down', 14) %></td>
+                <td><%= a.save_count %></td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <div>
+        <section class="card">
+          <h2 style="margin:0 0 0.85rem;font-size:1.05rem;">Traffic by Region &amp; Country</h2>
+          <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:0.85rem;">
+            <% trafficByRegion.forEach(function(r) { %>
+            <span class="badge badge-webp"><%= r.region_bucket %>: <%= r.hits %></span>
+            <% }) %>
+          </div>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>Country Code</th><th>Page Hits</th></tr></thead>
+              <tbody>
+                <% trafficByCountry.forEach(function(c) { %>
+                <tr><td><strong><%= c.country_code %></strong></td><td><%= c.hits %></td></tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2 style="margin:0 0 0.85rem;font-size:1.05rem;">Search Performance</h2>
+          <% if (!topSearches.length) { %><p style="color:#64748b;">No reader searches recorded yet.</p><% } else { %>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>Query</th><th>Searches</th><th>Avg Results</th></tr></thead>
+              <tbody>
+                <% topSearches.forEach(function(s) { %>
+                <tr><td><%= s.query %></td><td><%= s.searches %></td><td><%= s.avg_results %></td></tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+          <% } %>
+        </section>
+
+        <section class="card">
+          <h2 style="margin:0 0 0.85rem;font-size:1.05rem;">Newsletter Sources</h2>
+          <% if (!newsletterStats.length) { %><p style="color:#64748b;">No subscribers yet.</p><% } else { %>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>Source</th><th>Subscribers</th></tr></thead>
+              <tbody>
+                <% newsletterStats.forEach(function(n) { %>
+                <tr><td><%= n.source %></td><td><%= n.total %></td></tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+          <% } %>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<%- include('../partials/head') %>
+<body>
+<%- include('../partials/header') %>
+
+<main class="main-content container">
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <a href="/">Home</a>
+    <span>/</span>
+    <span aria-current="page"><%= category.name %></span>
+  </nav>
+
+  <header style="margin-bottom:1.75rem;padding-bottom:1.1rem;border-bottom:2px solid var(--border);">
+    <span class="cat-pill" style="--cat-color:<%= category.accent_color || '#2563EB' %>">Category Desk</span>
+    <h1 style="margin:0.55rem 0 0.4rem;font-size:clamp(1.6rem, 2.5vw, 2.2rem);font-weight:850;"><%= category.name %></h1>
+    <p style="margin:0;color:var(--text-muted);max-width:70ch;"><%= category.description %></p>
+  </header>
+
+  <div class="layout-split">
+    <div>
+      <% if (posts.length === 0) { %>
+      <div class="card"><p>No published stories in this category yet. Check back soon!</p></div>
+      <% } else { %>
+      <div class="posts-grid two-col">
+        <% posts.forEach(function(post) { %>
+        <article class="post-card">
+          <% if (post.featured_image_thumb || post.featured_image) { %>
+          <a href="/article/<%= post.slug %>" class="post-card-img">
+            <img
+              src="<%= post.featured_image_thumb || post.featured_image %>"
+              alt="<%= post.featured_image_alt || post.title %>"
+              title="<%= post.featured_image_title || post.title %>"
+              width="640"
+              height="360"
+              loading="lazy"
+              decoding="async"
+            >
+          </a>
+          <% } %>
+          <div class="post-card-body">
+            <h2 class="post-card-title"><a href="/article/<%= post.slug %>"><%= post.title %></a></h2>
+            <p class="post-card-excerpt"><%= post.excerpt %></p>
+            <div class="meta-line">
+              <span><%= post.author_name || 'TechHaven' %></span>
+              <span>•</span>
+              <time datetime="<%= post.published_at %>"><%= formatDate(post.published_at) %></time>
+              <span>•</span>
+              <span><%= post.reading_time %> min read</span>
+            </div>
+          </div>
+        </article>
+        <% }) %>
+      </div>
+
+      <% if (pagination.totalPages > 1) { %>
+      <nav class="pagination" aria-label="Pagination">
+        <% for (let p = 1; p <= pagination.totalPages; p++) { %>
+        <a href="/category/<%= category.slug %>?page=<%= p %>" class="page-btn <%= p === pagination.page ? 'active' : '' %>"><%= p %></a>
+        <% } %>
+      </nav>
+      <% } %>
+      <% } %>
+    </div>
+
+    <%- include('../partials/sidebar') %>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>
+</body>
+</html>

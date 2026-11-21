@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+  <title>SEO &amp; AdSense Settings — TechHaven CMS</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+<div class="admin-shell">
+  <%- include('./sidebar') %>
+
+  <main class="admin-main">
+    <div class="admin-header">
+      <div>
+        <h1>SEO, Google AdSense &amp; Site Settings</h1>
+        <div style="font-size:0.88rem;color:#64748b;">Configure Google AdSense publisher ID, ad slot units, <code>ads.txt</code>, Search Console verification, and GA4.</div>
+      </div>
+    </div>
+
+    <% if (flash) { %>
+    <div class="alert alert-success"><%= flash %></div>
+    <% } %>
+    <% if (error) { %>
+    <div class="alert alert-error"><%= error %></div>
+    <% } %>
+
+    <div class="admin-grid-2" style="gap:1.25rem;align-items:start;">
+      <!-- Monetization & AdSense -->
+      <section class="card">
+        <h2 style="margin:0 0 0.9rem;font-size:1.12rem;"><%- icon('dollar-sign', 19) %> Google AdSense &amp; Monetization</h2>
+        <form action="/admin/settings" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="hidden" name="section" value="monetization">
+
+          <div class="field">
+            <label class="toggle-row" for="adsSlotsVisibleToggle">
+              <div>
+                <div class="toggle-row-title"><%- icon('eye', 16) %> Show Ad Slots on Website (Master Toggle)</div>
+                <div class="toggle-row-sub">Keep OFF while ads are paused to hide all ad containers cleanly with zero empty space.</div>
+              </div>
+              <span class="toggle-switch">
+                <input id="adsSlotsVisibleToggle" type="checkbox" name="ads_slots_visible" value="1" <%= settings.ads_slots_visible === '1' ? 'checked' : '' %>>
+                <span class="toggle-slider"></span>
+              </span>
+            </label>
+          </div>
+
+          <div class="field">
+            <label class="toggle-row" for="adsEnabledToggle">
+              <div>
+                <div class="toggle-row-title">Enable Live Google AdSense Script &amp; Slots</div>
+                <div class="toggle-row-sub">Loads Google AdSense script and renders configured ad unit HTML (requires Master Toggle ON).</div>
+              </div>
+              <span class="toggle-switch">
+                <input id="adsEnabledToggle" type="checkbox" name="ads_enabled" value="1" <%= settings.ads_enabled === '1' ? 'checked' : '' %>>
+                <span class="toggle-slider"></span>
+              </span>
+            </label>
+          </div>
+
+          <div class="field">
+            <label class="toggle-row" for="adsPlaceholderToggle">
+              <div>
+                <div class="toggle-row-title">Show Ad Slot Layout Placeholders</div>
+                <div class="toggle-row-sub">Shows preview frames inside active ad slots when ad code is empty (turn OFF for clean review).</div>
+              </div>
+              <span class="toggle-switch">
+                <input id="adsPlaceholderToggle" type="checkbox" name="ads_placeholder_mode" value="1" <%= settings.ads_placeholder_mode === '1' ? 'checked' : '' %>>
+                <span class="toggle-slider"></span>
+              </span>
+            </label>
+          </div>
+
+          <div class="field">
+            <label for="adsPubId">Google AdSense Publisher ID</label>
+            <input id="adsPubId" type="text" name="adsense_publisher_id" value="<%= settings.adsense_publisher_id || '' %>" placeholder="ca-pub-1234567890123456">
+          </div>
+
+          <div class="field">
+            <label for="adsMidP">Inject Mid-Article Ad After Paragraph #</label>
+            <input id="adsMidP" type="number" min="1" max="12" name="ads_mid_paragraph" value="<%= settings.ads_mid_paragraph || '3' %>">
+          </div>
+
+          <div class="field">
+            <label for="slotHeader">Header Banner Ad Snippet (728×90 / Responsive)</label>
+            <textarea id="slotHeader" name="ads_slot_header" rows="2" placeholder="<ins class=&quot;adsbygoogle&quot; ...></ins>"><%= settings.ads_slot_header || '' %></textarea>
+          </div>
+
+          <div class="field">
+            <label for="slotArticleTop">Article Top Ad Snippet</label>
+            <textarea id="slotArticleTop" name="ads_slot_article_top" rows="2"><%= settings.ads_slot_article_top || '' %></textarea>
+          </div>
+
+          <div class="field">
+            <label for="slotArticleMid">Mid-Article High-RPM Ad Snippet</label>
+            <textarea id="slotArticleMid" name="ads_slot_article_mid" rows="2"><%= settings.ads_slot_article_mid || '' %></textarea>
+          </div>
+
+          <div class="field">
+            <label for="slotSidebar">Sidebar Ad Snippet (300×250)</label>
+            <textarea id="slotSidebar" name="ads_slot_sidebar" rows="2"><%= settings.ads_slot_sidebar || '' %></textarea>
+          </div>
+
+          <div class="field">
+            <label for="slotInfeed">Homepage In-Feed Native Ad Snippet</label>
+            <textarea id="slotInfeed" name="ads_slot_infeed" rows="2"><%= settings.ads_slot_infeed || '' %></textarea>
+          </div>
+
+          <div class="field">
+            <label for="slotBottom">End-of-Article Multiplex Ad Snippet</label>
+            <textarea id="slotBottom" name="ads_slot_article_bottom" rows="2"><%= settings.ads_slot_article_bottom || '' %></textarea>
+          </div>
+
+          <div class="field">
+            <label for="adsTxt"><code>/ads.txt</code> File Contents</label>
+            <textarea id="adsTxt" name="ads_txt" rows="3" placeholder="google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0"><%= settings.ads_txt || '' %></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary">Save AdSense Configuration</button>
+        </form>
+      </section>
+
+      <div>
+        <!-- General Branding -->
+        <section class="card">
+          <h2 style="margin:0 0 0.9rem;font-size:1.12rem;"><%- icon('globe', 19) %> Site Branding &amp; Domain</h2>
+          <form action="/admin/settings" method="POST">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input type="hidden" name="section" value="general">
+
+            <div class="field">
+              <label for="siteName">Site Name</label>
+              <input id="siteName" type="text" name="site_name" value="<%= settings.site_name || '' %>">
+            </div>
+            <div class="field">
+              <label for="siteTagline">Tagline</label>
+              <input id="siteTagline" type="text" name="site_tagline" value="<%= settings.site_tagline || '' %>">
+            </div>
+            <div class="field">
+              <label for="siteDesc">Default Site Meta Description</label>
+              <textarea id="siteDesc" name="site_description" rows="2"><%= settings.site_description || '' %></textarea>
+            </div>
+            <div class="field">
+              <label for="siteUrl">Canonical Site URL (no trailing slash)</label>
+              <input id="siteUrl" type="url" name="site_url" value="<%= settings.site_url || 'https://techhavenus.com' %>">
+            </div>
+            <div class="admin-grid-2">
+              <div class="field">
+                <label for="contactEmail">Editorial Contact Email</label>
+                <input id="contactEmail" type="email" name="contact_email" value="<%= settings.contact_email || '' %>">
+              </div>
+              <div class="field">
+                <label for="privacyEmail">Privacy / GDPR Email</label>
+                <input id="privacyEmail" type="email" name="privacy_email" value="<%= settings.privacy_email || '' %>">
+              </div>
+            </div>
+            <div class="admin-grid-2">
+              <div class="field">
+                <label for="twitterHandle">Twitter / X Handle</label>
+                <input id="twitterHandle" type="text" name="twitter_handle" value="<%= settings.twitter_handle || '' %>">
+              </div>
+              <div class="field">
+                <label for="pubPhone">Business Phone</label>
+                <input id="pubPhone" type="text" name="publisher_phone" value="<%= settings.publisher_phone || '' %>">
+              </div>
+            </div>
+            <div class="admin-grid-2">
+              <div class="field">
+                <label for="pubLegal">Legal / Publisher Entity Name</label>
+                <input id="pubLegal" type="text" name="publisher_legal_name" value="<%= settings.publisher_legal_name || '' %>">
+              </div>
+              <div class="field">
+                <label for="pubOwner">Owner &amp; Managing Editor</label>
+                <input id="pubOwner" type="text" name="publisher_owner_name" value="<%= settings.publisher_owner_name || '' %>">
+              </div>
+            </div>
+            <div class="field">
+              <label for="pubStreet">Physical Street Address (US CAN-SPAM / EU Impressum)</label>
+              <input id="pubStreet" type="text" name="publisher_street_address" value="<%= settings.publisher_street_address || '' %>">
+            </div>
+            <div class="admin-grid-4">
+              <div class="field"><label for="pubCity">City</label><input id="pubCity" type="text" name="publisher_city" value="<%= settings.publisher_city || '' %>"></div>
+              <div class="field"><label for="pubState">State</label><input id="pubState" type="text" name="publisher_state" value="<%= settings.publisher_state || '' %>"></div>
+              <div class="field"><label for="pubZip">Postal</label><input id="pubZip" type="text" name="publisher_postal_code" value="<%= settings.publisher_postal_code || '' %>"></div>
+              <div class="field"><label for="pubCountry">Country</label><input id="pubCountry" type="text" name="publisher_country" value="<%= settings.publisher_country || '' %>"></div>
+            </div>
+            <div class="field">
+              <label for="cdnBase">Cloudflare R2 / CDN Asset Base URL (Optional)</label>
+              <input id="cdnBase" type="url" name="cdn_base_url" value="<%= settings.cdn_base_url || '' %>" placeholder="https://cdn.techhavenus.com">
+            </div>
+            <button type="submit" class="btn btn-primary">Save General &amp; Ownership Settings</button>
+          </form>
+        </section>
+
+        <!-- Newsletter Provider (GDPR / CAN-SPAM Double Opt-In) -->
+        <section class="card">
+          <h2 style="margin:0 0 0.9rem;font-size:1.12rem;"><%- icon('mail', 19) %> Newsletter Provider (Double Opt-In &amp; Unsubscribe)</h2>
+          <form action="/admin/settings" method="POST">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input type="hidden" name="section" value="newsletter">
+
+            <div class="field">
+              <label for="nlProvider">Email Delivery Provider</label>
+              <select id="nlProvider" name="newsletter_provider">
+                <option value="local" <%= (settings.newsletter_provider || 'local') === 'local' ? 'selected' : '' %>>Local Double Opt-In (SQLite + Instant Confirm Link)</option>
+                <option value="brevo" <%= settings.newsletter_provider === 'brevo' ? 'selected' : '' %>>Brevo (Sendinblue) SMTP + Contacts API</option>
+                <option value="buttondown" <%= settings.newsletter_provider === 'buttondown' ? 'selected' : '' %>>Buttondown Newsletter API</option>
+                <option value="mailchimp" <%= settings.newsletter_provider === 'mailchimp' ? 'selected' : '' %>>Mailchimp Marketing API</option>
+                <option value="resend" <%= settings.newsletter_provider === 'resend' ? 'selected' : '' %>>Resend Transactional Email API</option>
+              </select>
+            </div>
+            <div class="admin-grid-2">
+              <div class="field">
+                <label for="nlApiKey">Provider API Key</label>
+                <input id="nlApiKey" type="password" name="newsletter_api_key" value="<%= settings.newsletter_api_key || '' %>" placeholder="Brevo / Buttondown / Mailchimp / Resend API Key">
+              </div>
+              <div class="field">
+                <label for="nlListId">List / Audience ID (Brevo / Mailchimp)</label>
+                <input id="nlListId" type="text" name="newsletter_list_id" value="<%= settings.newsletter_list_id || '' %>">
+              </div>
+            </div>
+            <div class="admin-grid-2">
+              <div class="field">
+                <label for="nlFromName">Sender Name</label>
+                <input id="nlFromName" type="text" name="newsletter_from_name" value="<%= settings.newsletter_from_name || '' %>">
+              </div>
+              <div class="field">
+                <label for="nlFromEmail">Verified Sender Email</label>
+                <input id="nlFromEmail" type="email" name="newsletter_from_email" value="<%= settings.newsletter_from_email || '' %>">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Save Newsletter Provider</button>
+          </form>
+        </section>
+
+        <!-- Social Auto-Posting & Web Push VAPID -->
+        <section class="card">
+          <h2 style="margin:0 0 0.9rem;font-size:1.12rem;"><%- icon('megaphone', 19) %> Social Distribution &amp; Web Push VAPID</h2>
+          <form action="/admin/settings" method="POST">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input type="hidden" name="section" value="social">
+
+            <div class="admin-grid-2">
+              <div class="field">
+                <label for="bskyHandle">Bluesky Handle (ATProto Auto-Post)</label>
+                <input id="bskyHandle" type="text" name="bluesky_handle" value="<%= settings.bluesky_handle || '' %>" placeholder="techhavenus.bsky.social">
+              </div>
+              <div class="field">
+                <label for="bskyPass">Bluesky App Password</label>
+                <input id="bskyPass" type="password" name="bluesky_app_password" value="<%= settings.bluesky_app_password || '' %>" placeholder="xxxx-xxxx-xxxx-xxxx">
+              </div>
+            </div>
+            <div class="field">
+              <label for="socialWebhook">Social Automation Webhook URL (Make / Zapier / n8n for X, Reddit, LinkedIn)</label>
+              <input id="socialWebhook" type="url" name="social_webhook_url" value="<%= settings.social_webhook_url || '' %>" placeholder="https://hook.us1.make.com/...">
+            </div>
+            <div class="field">
+              <label for="vapidSubject">Web Push VAPID Contact (<code>mailto:</code> or <code>https://</code>)</label>
+              <input id="vapidSubject" type="text" name="vapid_subject" value="<%= settings.vapid_subject || 'mailto:contact@techhavenus.com' %>">
+            </div>
+            <button type="submit" class="btn btn-primary">Save Social &amp; Push Settings</button>
+          </form>
+        </section>
+
+        <!-- Search Console & Analytics -->
+        <section class="card">
+          <h2 style="margin:0 0 0.9rem;font-size:1.12rem;"><%- icon('trending-up', 19) %> Google Search Console &amp; Analytics</h2>
+          <form action="/admin/settings" method="POST">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input type="hidden" name="section" value="seo">
+
+            <div class="field">
+              <label for="gscToken">Google Search Console Verification Content Code</label>
+              <input id="gscToken" type="text" name="google_site_verification" value="<%= settings.google_site_verification || '' %>" placeholder="content string from meta tag">
+            </div>
+            <div class="field">
+              <label for="bingToken">Bing Webmaster Verification Code</label>
+              <input id="bingToken" type="text" name="bing_site_verification" value="<%= settings.bing_site_verification || '' %>">
+            </div>
+            <div class="field">
+              <label for="ga4Id">Google Analytics 4 Measurement ID</label>
+              <input id="ga4Id" type="text" name="ga_measurement_id" value="<%= settings.ga_measurement_id || '' %>" placeholder="G-XXXXXXXXXX">
+            </div>
+            <div class="field">
+              <label for="robotsExtra">Extra <code>robots.txt</code> Rules (Optional)</label>
+              <textarea id="robotsExtra" name="robots_extra" rows="2"><%= settings.robots_extra || '' %></textarea>
+            </div>
+            <div class="field">
+              <label for="geminiKey">Gemini API Key (Optional for AI Article Assistant LLM mode)</label>
+              <input id="geminiKey" type="password" name="gemini_api_key" value="<%= settings.gemini_api_key || '' %>" placeholder="Leave blank to use built-in zero-cost grounded assistant">
+            </div>
+            <div class="field">
+              <label for="openaiKey">OpenAI API Key (Optional fallback for AI Article Assistant)</label>
+              <input id="openaiKey" type="password" name="openai_api_key" value="<%= settings.openai_api_key || '' %>">
+            </div>
+            <button type="submit" class="btn btn-primary">Save SEO &amp; Analytics</button>
+          </form>
+        </section>
+
+        <!-- Admin Profile & Password -->
+        <section class="card">
+          <h2 style="margin:0 0 0.9rem;font-size:1.12rem;"><%- icon('lock', 19) %> Admin Profile &amp; Security</h2>
+          <form action="/admin/settings" method="POST">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input type="hidden" name="section" value="account">
+
+            <div class="admin-grid-2">
+              <div class="field">
+                <label for="accName">Author Name (Byline)</label>
+                <input id="accName" type="text" name="name" value="<%= currentUser.name %>">
+              </div>
+              <div class="field">
+                <label for="accEmail">Login Email</label>
+                <input id="accEmail" type="email" name="email" value="<%= currentUser.email %>">
+              </div>
+            </div>
+            <div class="admin-grid-2">
+              <div class="field">
+                <label for="accJob">Job Title</label>
+                <input id="accJob" type="text" name="job_title" value="<%= currentUser.job_title || '' %>">
+              </div>
+              <div class="field">
+                <label for="accLoc">Location</label>
+                <input id="accLoc" type="text" name="location" value="<%= currentUser.location || '' %>" placeholder="San Francisco, CA, USA">
+              </div>
+            </div>
+            <div class="field">
+              <label for="accExp">Expertise Topics (comma-separated for Person JSON-LD knowsAbout)</label>
+              <input id="accExp" type="text" name="expertise" value="<%= currentUser.expertise || '' %>">
+            </div>
+            <div class="field">
+              <label for="accCreds">Credentials / Experience Line</label>
+              <input id="accCreds" type="text" name="credentials" value="<%= currentUser.credentials || '' %>">
+            </div>
+            <div class="admin-grid-3" style="gap:0.6rem;">
+              <div class="field"><label for="accX">Twitter / X</label><input id="accX" type="text" name="twitter_handle" value="<%= currentUser.twitter_handle || '' %>"></div>
+              <div class="field"><label for="accIn">LinkedIn URL</label><input id="accIn" type="url" name="linkedin_url" value="<%= currentUser.linkedin_url || '' %>"></div>
+              <div class="field"><label for="accWeb">Website URL</label><input id="accWeb" type="url" name="website_url" value="<%= currentUser.website_url || '' %>"></div>
+            </div>
+            <div class="field">
+              <label for="accBio">Author Bio (Shown on Articles for E-E-A-T)</label>
+              <textarea id="accBio" name="bio" rows="2"><%= currentUser.bio %></textarea>
+            </div>
+            <div class="admin-grid-2">
+              <div class="field">
+                <label for="currPass">Current Password (only to change password)</label>
+                <input id="currPass" type="password" name="current_password">
+              </div>
+              <div class="field">
+                <label for="newPass">New Password (min 8 chars)</label>
+                <input id="newPass" type="password" name="new_password">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Update Account</button>
+          </form>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

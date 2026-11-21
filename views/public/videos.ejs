@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<%- include('../partials/head') %>
+<body>
+<%- include('../partials/header') %>
+
+<main class="main-content container">
+  <section style="margin-bottom:1.75rem;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;flex-wrap:wrap;padding-bottom:1rem;border-bottom:2px solid var(--border);">
+      <div>
+        <span class="badge" style="margin-bottom:0.4rem;">TechHaven Video Desk</span>
+        <h1 style="margin:0;font-size:clamp(1.55rem,3vw,2.35rem);display:flex;align-items:center;gap:0.5rem;"><%- icon('clapperboard', 26) %> Video Reviews &amp; YouTube Shorts</h1>
+        <p style="margin:0.45rem 0 0;color:var(--text-muted);max-width:68ch;">
+          Hands-on GPU &amp; hardware benchmarks, rapid AI briefings, and 60-second YouTube Shorts built for fast Core Web Vitals (zero-lag facade embeds + VideoObject Schema).
+        </p>
+      </div>
+      <div style="display:flex;gap:0.45rem;flex-wrap:wrap;">
+        <a href="/videos" class="btn btn-sm <%= filter === 'all' ? 'btn-primary' : 'btn-outline' %>">All Videos</a>
+        <a href="/videos?type=reviews" class="btn btn-sm <%= filter === 'reviews' ? 'btn-primary' : 'btn-outline' %>">Full Reviews</a>
+        <a href="/videos?type=shorts" class="btn btn-sm <%= filter === 'shorts' ? 'btn-primary' : 'btn-outline' %>">YouTube Shorts</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="layout-split">
+    <div>
+      <% if (!videos || videos.length === 0) { %>
+        <div class="page-card" style="padding:2rem;text-align:center;">
+          <h2 style="margin-top:0;">No videos found for this filter</h2>
+          <p style="color:var(--text-muted);">Try switching back to All Videos or explore our written articles.</p>
+          <a href="/videos" class="btn btn-primary btn-sm">View All Videos</a>
+        </div>
+      <% } else { %>
+        <div class="video-hub-grid">
+          <% videos.forEach(function(item) { %>
+          <article class="post-card" style="display:flex;flex-direction:column;">
+            <div class="yt-lite <%= (item.videoInfo.isShort || item.video_is_short) ? 'yt-lite-short' : '' %>" data-yt-id="<%= item.videoInfo.videoId %>" data-yt-title="<%= item.video_title || item.title %>" data-yt-short="<%= (item.videoInfo.isShort || item.video_is_short) ? '1' : '0' %>" style="margin:0;border-radius:var(--radius) var(--radius) 0 0;">
+              <img src="<%= item.videoInfo.thumbnailUrl %>" alt="<%= item.video_title || item.title %>" loading="lazy">
+              <button type="button" class="yt-play-btn" aria-label="Play Video: <%= item.video_title || item.title %>"><%- icon('play', 22) %></button>
+              <span class="yt-badge"><%= (item.videoInfo.isShort || item.video_is_short) ? 'SHORTS' : (item.video_duration || 'VIDEO') %></span>
+            </div>
+            <div class="post-card-body">
+              <div class="post-card-meta">
+                <span><%= item.category_name || 'Video' %></span>
+                <span>•</span>
+                <time datetime="<%= item.published_at %>"><%= formatDate(item.published_at) %></time>
+              </div>
+              <h2 class="post-card-title" style="font-size:1.05rem;">
+                <a href="/article/<%= item.slug %>"><%= item.video_title || item.title %></a>
+              </h2>
+              <p class="post-card-excerpt"><%= item.excerpt %></p>
+              <div style="margin-top:auto;padding-top:0.65rem;display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap;font-size:0.82rem;">
+                <a href="/article/<%= item.slug %>" style="font-weight:700;">Read Full Report →</a>
+                <a href="<%= item.videoInfo.watchUrl %>" target="_blank" rel="noopener noreferrer" style="color:var(--text-muted);">Watch on YouTube ↗</a>
+              </div>
+            </div>
+          </article>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
+
+    <%- include('../partials/sidebar') %>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+  <title>SEO Tools &amp; Redirects — TechHaven CMS</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+<div class="admin-shell">
+  <%- include('./sidebar') %>
+
+  <main class="admin-main">
+    <div class="admin-header">
+      <div>
+        <h1>SEO Audit, 301 Redirects, Canonical &amp; Schema Validator</h1>
+        <div style="font-size:0.88rem;color:#64748b;">Protect search equity with 301 redirects, valid JSON-LD NewsArticle schema, canonical checks, and broken internal link scanning.</div>
+      </div>
+    </div>
+
+    <% if (flash) { %><div class="alert alert-success"><%= flash %></div><% } %>
+    <% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
+
+    <div class="admin-split-side">
+      <section class="card">
+        <h2 style="margin:0 0 0.85rem;font-size:1.05rem;">Add 301 / 302 Redirect</h2>
+        <form action="/admin/seo-tools/redirects" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="field">
+            <label>From Path</label>
+            <input type="text" name="from_path" required placeholder="/old-slug-path">
+          </div>
+          <div class="field">
+            <label>To Path or URL</label>
+            <input type="text" name="to_path" required placeholder="/article/new-slug-path">
+          </div>
+          <div class="field">
+            <label>Status Code</label>
+            <select name="status_code">
+              <option value="301">301 Permanent Redirect</option>
+              <option value="302">302 Temporary Redirect</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;">Save Redirect Rule</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2 style="margin:0 0 0.85rem;font-size:1.05rem;">Active Redirect Rules (<%= redirects.length %>)</h2>
+        <div class="table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>From</th><th>To</th><th>Code</th><th>Hits</th><th>Action</th></tr></thead>
+            <tbody>
+              <% redirects.forEach(function(r) { %>
+              <tr>
+                <td><code><%= r.from_path %></code></td>
+                <td><code><%= r.to_path %></code></td>
+                <td><span class="badge badge-webp"><%= r.status_code %></span></td>
+                <td><%= r.hits %></td>
+                <td>
+                  <form action="/admin/seo-tools/redirects/<%= r.id %>/delete" method="POST">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                  </form>
+                </td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <section class="card">
+      <h2 style="margin:0 0 0.85rem;font-size:1.08rem;">Canonical, Schema &amp; Broken Internal Link Validator</h2>
+      <div class="table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Article</th>
+              <th>Canonical</th>
+              <th>NewsArticle Schema</th>
+              <th>Internal Link Scan</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% audits.forEach(function(a) { %>
+            <tr>
+              <td><a href="/admin/posts/<%= a.id %>/edit" style="font-weight:700;color:#2563eb;"><%= a.title %></a></td>
+              <td>
+                <% if (a.canonicalValid) { %>
+                <span class="badge badge-pub"><%- icon('check', 12) %> Valid</span>
+                <% } else { %>
+                <span class="badge badge-draft">Invalid URL</span>
+                <% } %>
+                <div style="font-size:0.74rem;color:#64748b;"><%= a.canonicalEffective %></div>
+              </td>
+              <td>
+                <% if (a.schemaValid) { %>
+                <span class="badge badge-pub"><%- icon('check', 12) %> Schema Complete</span>
+                <% } else { %>
+                <span class="badge badge-draft"><%= a.schemaIssues.join(', ') %></span>
+                <% } %>
+              </td>
+              <td>
+                <% if (a.brokenInternal.length === 0) { %>
+                <span style="color:#16a34a;font-weight:600;font-size:0.84rem;display:inline-flex;align-items:center;gap:0.25rem;"><%- icon('check', 14) %> 0 broken (<%= a.linkCount %> links)</span>
+                <% } else { %>
+                <span style="color:#dc2626;font-weight:700;font-size:0.84rem;">Broken: <%= a.brokenInternal.join(', ') %></span>
+                <% } %>
+              </td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

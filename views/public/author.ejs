@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<%- include('../partials/head') %>
+<body>
+<%- include('../partials/header') %>
+
+<main class="main-content container">
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <a href="/">Home</a>
+    <span>/</span>
+    <a href="/about">Editorial Team</a>
+    <span>/</span>
+    <span><%= author.name %></span>
+  </nav>
+
+  <div class="layout-split">
+    <div>
+      <section class="author-box" style="margin-top:0;flex-wrap:wrap;">
+        <div class="author-avatar" style="width:76px;height:76px;font-size:1.75rem;"><%= author.name.slice(0, 1).toUpperCase() %></div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;gap:0.45rem;flex-wrap:wrap;align-items:center;">
+            <span class="cat-pill" style="--cat-color:#2563EB"><%= author.job_title || 'Editorial Author' %></span>
+            <% if (author.location) { %>
+            <span class="region-badge"><%- icon('map-pin', 13) %> <%= author.location %></span>
+            <% } %>
+            <span class="trust-pill"><%- icon('check', 13) %> Verified Author</span>
+          </div>
+
+          <h1 style="margin:0.5rem 0 0.25rem;font-size:1.85rem;"><%= author.name %></h1>
+
+          <% if (author.credentials) { %>
+          <div style="font-size:0.86rem;font-weight:700;color:var(--text-muted);margin-bottom:0.45rem;"><%= author.credentials %></div>
+          <% } %>
+
+          <p style="margin:0 0 0.75rem;color:var(--text-muted);"><%= author.bio %></p>
+
+          <% if (author.expertise) { %>
+          <div class="tag-cloud" style="margin-bottom:0.75rem;">
+            <% author.expertise.split(',').map((s) => s.trim()).filter(Boolean).forEach(function(topic) { %>
+            <span class="tag-chip"><%= topic %></span>
+            <% }) %>
+          </div>
+          <% } %>
+
+          <div style="display:flex;gap:0.65rem;flex-wrap:wrap;align-items:center;font-size:0.84rem;font-weight:600;">
+            <% if (author.twitter_handle) { %>
+            <a href="https://x.com/<%= author.twitter_handle.replace(/^@/, '') %>" target="_blank" rel="noopener noreferrer" class="share-btn">X: <%= author.twitter_handle %></a>
+            <% } %>
+            <% if (author.linkedin_url) { %>
+            <a href="<%= author.linkedin_url %>" target="_blank" rel="noopener noreferrer" class="share-btn">LinkedIn Profile ↗</a>
+            <% } %>
+            <% if (author.website_url) { %>
+            <a href="<%= author.website_url %>" target="_blank" rel="noopener noreferrer" class="share-btn">Website ↗</a>
+            <% } %>
+            <span style="color:var(--text-soft);margin-left:auto;"><%= authorStats.total_articles %> articles • <%= authorStats.total_views.toLocaleString('en-US') %> total reads</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-header">
+        <h2 class="section-title">Published Articles by <%= author.name %> (<%= posts.length %>)</h2>
+      </div>
+
+      <div class="posts-grid two-col">
+        <% posts.forEach(function(post) { %>
+        <article class="post-card">
+          <% if (post.featured_image_thumb || post.featured_image) { %>
+          <a href="/article/<%= post.slug %>" class="post-card-img">
+            <img src="<%= assetUrl(post.featured_image_thumb || post.featured_image) %>" alt="<%= post.featured_image_alt || post.title %>" width="640" height="360" loading="lazy">
+          </a>
+          <% } %>
+          <div class="post-card-body">
+            <% if (post.category_name) { %>
+            <div><a href="/category/<%= post.category_slug %>" class="cat-pill" style="--cat-color:<%= post.category_color || '#2563EB' %>"><%= post.category_name %></a></div>
+            <% } %>
+            <h3 class="post-card-title"><a href="/article/<%= post.slug %>"><%= post.title %></a></h3>
+            <p class="post-card-excerpt"><%= post.excerpt %></p>
+            <div class="meta-line">
+              <time datetime="<%= post.published_at %>"><%= formatDate(post.published_at) %></time>
+              <span>•</span>
+              <span><%= post.reading_time %> min</span>
+            </div>
+          </div>
+        </article>
+        <% }) %>
+      </div>
+    </div>
+
+    <%- include('../partials/sidebar') %>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>
+</body>
+</html>

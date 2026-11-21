@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+  <title>Editorial Calendar — TechHaven CMS</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+<div class="admin-shell">
+  <%- include('./sidebar') %>
+
+  <main class="admin-main">
+    <div class="admin-header">
+      <div>
+        <h1>Editorial Calendar &amp; Approval Queue</h1>
+        <div style="font-size:0.88rem;color:#64748b;">Track articles waiting for review, scheduled auto-publishing, drafts, and live releases.</div>
+      </div>
+      <a href="/admin/posts/new" class="btn btn-primary">+ Schedule Article</a>
+    </div>
+
+    <% if (flash) { %><div class="alert alert-success"><%= flash %></div><% } %>
+
+    <div class="admin-grid-2" style="gap:1.25rem;">
+      <section class="card">
+        <h2 style="margin:0 0 0.75rem;font-size:1.05rem;"><%- icon('file-edit', 18) %> Waiting Review / Approval (<%= grouped.in_review.length %>)</h2>
+        <% if (!grouped.in_review.length) { %><p style="color:#64748b;">No articles waiting for review.</p><% } %>
+        <% grouped.in_review.forEach(function(p) { %>
+        <div style="padding:0.65rem 0;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;gap:0.5rem;">
+          <div>
+            <strong><%= p.title %></strong>
+            <div style="font-size:0.78rem;color:#64748b;"><%= p.author_name %> • <%= p.category_name %></div>
+          </div>
+          <div style="display:flex;gap:0.35rem;">
+            <a href="/admin/posts/<%= p.id %>/edit" class="btn btn-outline btn-sm">Edit</a>
+            <% if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'editor')) { %>
+            <form action="/admin/posts/<%= p.id %>/approve" method="POST">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn btn-primary btn-sm">Approve</button>
+            </form>
+            <% } %>
+          </div>
+        </div>
+        <% }) %>
+      </section>
+
+      <section class="card">
+        <h2 style="margin:0 0 0.75rem;font-size:1.05rem;"><%- icon('clock', 18) %> Scheduled Publishing Queue (<%= grouped.scheduled.length %>)</h2>
+        <% if (!grouped.scheduled.length) { %><p style="color:#64748b;">No scheduled articles queued.</p><% } %>
+        <% grouped.scheduled.forEach(function(p) { %>
+        <div style="padding:0.65rem 0;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <strong><%= p.title %></strong>
+            <div style="font-size:0.78rem;color:#2563eb;font-weight:600;">Publishes: <%= formatDateTime(p.published_at) %></div>
+          </div>
+          <a href="/admin/posts/<%= p.id %>/edit" class="btn btn-outline btn-sm">Edit</a>
+        </div>
+        <% }) %>
+      </section>
+
+      <section class="card">
+        <h2 style="margin:0 0 0.75rem;font-size:1.05rem;"><%- icon('folder-tree', 18) %> Drafts (<%= grouped.draft.length %>)</h2>
+        <% if (!grouped.draft.length) { %><p style="color:#64748b;">No drafts.</p><% } %>
+        <% grouped.draft.forEach(function(p) { %>
+        <div style="padding:0.65rem 0;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
+          <div><strong><%= p.title %></strong><div style="font-size:0.78rem;color:#64748b;"><%= p.category_name %></div></div>
+          <a href="/admin/posts/<%= p.id %>/edit" class="btn btn-outline btn-sm">Edit</a>
+        </div>
+        <% }) %>
+      </section>
+
+      <section class="card">
+        <h2 style="margin:0 0 0.75rem;font-size:1.05rem;"><%- icon('check-circle', 18) %> Recently Published (<%= grouped.published.length %>)</h2>
+        <% grouped.published.slice(0, 10).forEach(function(p) { %>
+        <div style="padding:0.55rem 0;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;font-size:0.88rem;">
+          <div>
+            <a href="/article/<%= p.slug %>" target="_blank" style="font-weight:600;"><%= p.title %></a>
+            <div style="font-size:0.76rem;color:#64748b;"><%= formatDate(p.published_at) %> • <%= p.region %></div>
+          </div>
+          <a href="/admin/posts/<%= p.id %>/edit" class="btn btn-outline btn-sm">Edit</a>
+        </div>
+        <% }) %>
+      </section>
+    </div>
+  </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<%- include('../partials/head') %>
+<body>
+<%- include('../partials/header') %>
+
+<main class="main-content container">
+  <div class="page-card">
+    <h1 style="margin-top:0;">Contact TechHaven US</h1>
+    <p style="color:var(--text-muted);margin-bottom:1.15rem;">
+      Have a breaking US or Europe tech tip, press release, correction request, or advertising inquiry? Reach our editorial desk directly at
+      <a href="mailto:<%= settings.contact_email || 'contact@techhavenus.com' %>" style="color:var(--accent);font-weight:600;"><%= settings.contact_email || 'contact@techhavenus.com' %></a> or use the form below.
+    </p>
+
+    <div style="background:var(--surface-alt);border:1px solid var(--border);border-radius:12px;padding:1rem 1.2rem;margin-bottom:1.5rem;font-size:0.9rem;">
+      <div style="font-weight:800;margin-bottom:0.35rem;">Publisher Imprint &amp; Physical Mailing Address</div>
+      <div><strong><%= settings.publisher_legal_name || 'TechHaven US Media LLC' %></strong> • Owner: <%= settings.publisher_owner_name || 'Alex Mercer' %></div>
+      <div><%= [settings.publisher_street_address, settings.publisher_city || 'New York', [settings.publisher_state || 'NY', settings.publisher_postal_code].filter(Boolean).join(' '), settings.publisher_country || 'United States'].filter(Boolean).join(', ') %></div>
+      <div style="margin-top:0.25rem;"><% if (settings.publisher_phone) { %>Phone: <%= settings.publisher_phone %> • <% } %>Privacy / GDPR: <a href="mailto:<%= settings.privacy_email || 'privacy@techhavenus.com' %>" style="color:var(--accent);"><%= settings.privacy_email || 'privacy@techhavenus.com' %></a></div>
+    </div>
+
+    <% if (status === 'success') { %>
+    <div class="alert alert-success">Thank you! Your message has been delivered to the TechHaven US editorial team.</div>
+    <% } else if (status === 'error' && errorMsg) { %>
+    <div class="alert alert-error"><%= errorMsg %></div>
+    <% } %>
+
+    <form action="/contact" method="POST" class="form-grid">
+      <div style="display:none;"><input type="text" name="website" tabindex="-1" autocomplete="off"></div>
+
+      <div class="form-field">
+        <label for="contactName">Your Name</label>
+        <input id="contactName" type="text" name="name" value="<%= formValues.name || '' %>" required placeholder="Jane Doe">
+      </div>
+
+      <div class="form-field">
+        <label for="contactEmail">Email Address</label>
+        <input id="contactEmail" type="email" name="email" value="<%= formValues.email || '' %>" required placeholder="jane@company.com">
+      </div>
+
+      <div class="form-field">
+        <label for="contactSubject">Subject</label>
+        <input id="contactSubject" type="text" name="subject" value="<%= formValues.subject || '' %>" placeholder="News Tip / Correction / Partnership">
+      </div>
+
+      <div class="form-field">
+        <label for="contactMessage">Message</label>
+        <textarea id="contactMessage" name="message" rows="6" required placeholder="Share full details, links, or feedback..."><%= formValues.message || '' %></textarea>
+      </div>
+
+      <div>
+        <button type="submit" class="btn-primary">Send Message</button>
+      </div>
+    </form>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<%- include('../partials/head') %>
+<body>
+<%- include('../partials/header') %>
+
+<main class="main-content container">
+  <header style="margin-bottom:1.5rem;">
+    <span class="cat-pill" style="--cat-color:#2563EB">Reading List</span>
+    <h1 style="margin:0.45rem 0 0.35rem;font-size:2rem;font-weight:850;display:flex;align-items:center;gap:0.5rem;"><%- icon('bookmark-check', 26) %> Saved Articles</h1>
+    <p style="margin:0;color:var(--text-muted);">Articles bookmarked in your browser for quick offline-style return reading.</p>
+  </header>
+
+  <div class="layout-split">
+    <div id="savedArticlesContainer">
+      <div class="page-card"><p style="margin:0;">Loading saved articles...</p></div>
+    </div>
+
+    <%- include('../partials/sidebar') %>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>
+</body>
+</html>

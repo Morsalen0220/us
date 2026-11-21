@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+  <title>Categories — TechHaven CMS</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+<div class="admin-shell">
+  <%- include('./sidebar') %>
+
+  <main class="admin-main">
+    <div class="admin-header">
+      <div>
+        <h1>Categories &amp; Topic Silos</h1>
+        <div style="font-size:0.88rem;color:#64748b;">Organize US &amp; Europe coverage desks with dedicated SEO meta titles and descriptions.</div>
+      </div>
+    </div>
+
+    <% if (flash === 'saved') { %>
+    <div class="alert alert-success">Category saved cleanly.</div>
+    <% } else if (flash === 'deleted') { %>
+    <div class="alert alert-success">Category deleted.</div>
+    <% } %>
+
+    <div class="admin-split-side">
+      <section class="card">
+        <h2 style="margin:0 0 0.85rem;font-size:1.05rem;">Add or Update Category</h2>
+        <form action="/admin/categories" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="field">
+            <label for="catName">Category Name</label>
+            <input id="catName" type="text" name="name" required placeholder="e.g., Apple & Mobile">
+          </div>
+          <div class="field">
+            <label for="catSlug">Slug (leave empty to auto-generate)</label>
+            <input id="catSlug" type="text" name="slug" placeholder="apple-mobile">
+          </div>
+          <div class="field">
+            <label for="catDesc">Description</label>
+            <textarea id="catDesc" name="description" rows="2"></textarea>
+          </div>
+          <div class="field">
+            <label for="catMetaTitle">SEO Meta Title</label>
+            <input id="catMetaTitle" type="text" name="meta_title">
+          </div>
+          <div class="field">
+            <label for="catMetaDesc">SEO Meta Description</label>
+            <textarea id="catMetaDesc" name="meta_description" rows="2"></textarea>
+          </div>
+          <div class="admin-grid-2">
+            <div class="field">
+              <label for="catColor">Badge Color</label>
+              <input id="catColor" type="text" name="accent_color" value="#2563EB">
+            </div>
+            <div class="field">
+              <label for="catOrder">Sort Order</label>
+              <input id="catOrder" type="number" name="sort_order" value="10">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;">Save Category</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2 style="margin:0 0 0.85rem;font-size:1.05rem;">Active Categories</h2>
+        <div class="table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Slug</th>
+                <th>Posts</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% categories.forEach(function(cat) { %>
+              <tr>
+                <td>
+                  <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:<%= cat.accent_color %>;margin-right:6px;"></span>
+                  <strong><%= cat.name %></strong>
+                </td>
+                <td><code>/category/<%= cat.slug %></code></td>
+                <td><%= cat.post_count %></td>
+                <td>
+                  <form action="/admin/categories/<%= cat.id %>/delete" method="POST" onsubmit="return confirm('Delete category? Existing posts remain intact.');">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                  </form>
+                </td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+</body>
+</html>

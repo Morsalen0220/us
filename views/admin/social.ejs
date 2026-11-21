@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+  <title>Social Cards &amp; Distribution Queue — TechHaven CMS</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+<div class="admin-shell">
+  <%- include('./sidebar') %>
+
+  <main class="admin-main">
+    <div class="admin-header">
+      <div><h1><%- icon('megaphone', 24) %> Social Cards &amp; Distribution Queue</h1></div>
+      <a href="/admin/settings" class="btn btn-outline">Configure Bluesky &amp; Webhook</a>
+    </div>
+
+    <% if (flash) { %><div class="alert alert-success"><%= flash %></div><% } %>
+
+    <div class="admin-split-side">
+      <section class="card">
+        <h2 style="margin:0 0 0.85rem;font-size:1.05rem;">Generate Shareable Posts</h2>
+        <p style="font-size:0.84rem;color:#64748b;margin:0 0 0.9rem;">
+          Pick any published article to auto-generate platform-tuned copy with UTM tracking and a 1200×630 dynamic PNG card (<code>/og/:slug.png</code>).
+        </p>
+        <form action="/admin/social/generate" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="field">
+            <label for="socialPostSelect">Published Article</label>
+            <select id="socialPostSelect" name="post_id" required>
+              <% publishedPosts.forEach(function(p) { %>
+              <option value="<%= p.id %>"><%= p.title %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="field">
+            <label>Target Platforms</label>
+            <div class="admin-grid-2" style="gap:0.4rem;font-size:0.86rem;">
+              <label style="justify-content:flex-start;gap:0.4rem;"><input type="checkbox" name="platforms" value="x" checked> X / Twitter</label>
+              <label style="justify-content:flex-start;gap:0.4rem;"><input type="checkbox" name="platforms" value="bluesky" checked> Bluesky</label>
+              <label style="justify-content:flex-start;gap:0.4rem;"><input type="checkbox" name="platforms" value="reddit" checked> Reddit</label>
+              <label style="justify-content:flex-start;gap:0.4rem;"><input type="checkbox" name="platforms" value="linkedin" checked> LinkedIn</label>
+              <label style="justify-content:flex-start;gap:0.4rem;"><input type="checkbox" name="platforms" value="hackernews" checked> Hacker News</label>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;">Generate Social Queue Items</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2 style="margin:0 0 0.85rem;font-size:1.05rem;">Distribution Queue (<%= queue.length %>)</h2>
+        <% if (!queue.length) { %>
+          <p style="color:#64748b;">No social queue items yet. Generate posts from the left panel or enable auto-queue in the Post Editor.</p>
+        <% } else { %>
+          <div style="display:flex;flex-direction:column;gap:0.9rem;">
+            <% queue.forEach(function(item) { %>
+            <div style="border:1px solid #e2e8f0;border-radius:10px;padding:0.9rem;">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.55rem;">
+                <div>
+                  <span class="badge" style="text-transform:uppercase;"><%= item.platform %></span>
+                  <span class="badge <%= item.status === 'posted' ? 'badge-success' : '' %>"><%= item.status %></span>
+                  <% if (item.post_title) { %>
+                    <a href="/article/<%= item.post_slug %>" target="_blank" style="font-weight:700;font-size:0.9rem;margin-left:0.35rem;"><%= item.post_title %></a>
+                  <% } %>
+                </div>
+                <div style="display:flex;gap:0.4rem;align-items:center;">
+                  <% if (item.post_slug) { %>
+                    <a href="/og/<%= item.post_slug %>.png" target="_blank" class="btn btn-outline btn-sm">Preview PNG Card</a>
+                  <% } %>
+                  <% if (item.share_url) { %>
+                    <a href="<%= item.share_url %>" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">Open Share Intent ↗</a>
+                  <% } %>
+                </div>
+              </div>
+
+              <form action="/admin/social/<%= item.id %>/publish" method="POST" style="margin-bottom:0.45rem;">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <textarea name="copy_text" rows="3" style="width:100%;padding:0.55rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.86rem;margin-bottom:0.5rem;"><%= item.copy_text %></textarea>
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+                  <div style="font-size:0.78rem;color:#64748b;">
+                    <%= item.response_note ? item.response_note : 'Ready to dispatch via Bluesky ATProto, Webhook, or manual intent.' %>
+                  </div>
+                  <div style="display:flex;gap:0.4rem;">
+                    <button type="submit" class="btn btn-primary btn-sm"><%= item.status === 'posted' ? 'Re-Publish / Update' : 'Publish / Mark Posted' %></button>
+                  </div>
+                </div>
+              </form>
+
+              <form action="/admin/social/<%= item.id %>/delete" method="POST" style="display:inline;">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this social queue item?');">Delete</button>
+              </form>
+            </div>
+            <% }) %>
+          </div>
+        <% } %>
+      </section>
+    </div>
+  </main>
+</div>
+</body>
+</html>

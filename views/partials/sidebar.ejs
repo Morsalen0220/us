@@ -1,0 +1,51 @@
+<aside class="sidebar">
+  <%- renderAd('ads_slot_sidebar', 'ad-slot-sidebar') %>
+
+  <section class="widget">
+    <h3 class="widget-title"><%- icon('flame', 17) %> Trending Now</h3>
+    <div class="trending-list">
+      <% if (Array.isArray(trendingPosts)) { trendingPosts.forEach(function(item) { %>
+      <article class="trending-item">
+        <% if (item.featured_image_thumb || item.featured_image) { %>
+        <a href="/article/<%= item.slug %>" class="trending-thumb">
+          <img src="<%= assetUrl(item.featured_image_thumb || item.featured_image) %>" alt="<%= item.featured_image_alt || item.title %>" width="82" height="58" loading="lazy" decoding="async">
+        </a>
+        <% } %>
+        <div class="trending-item-body">
+          <a href="/article/<%= item.slug %>" class="trending-title"><%= item.title %></a>
+          <div class="meta-line">
+            <span><%= item.category_name || 'Tech' %></span>
+            <span>•</span>
+            <span><%= item.reading_time %> min read</span>
+          </div>
+        </div>
+      </article>
+      <% }); } %>
+    </div>
+  </section>
+
+  <section class="widget newsletter-widget">
+    <h3 class="widget-title" style="color:#fff;"><%- icon('mail', 17) %> Weekly Tech &amp; AI Briefing</h3>
+    <p>Get AI breakthroughs, Rockstar GTA updates, and hands-on speed guides delivered every Friday. Zero spam.</p>
+    <form class="newsletter-form js-newsletter-form" data-source="sidebar">
+      <input type="email" name="email" placeholder="you@company.com" required aria-label="Email address">
+      <label style="display:flex;gap:0.45rem;align-items:flex-start;font-size:0.74rem;color:#cbd5e1;line-height:1.35;cursor:pointer;">
+        <input type="checkbox" name="gdpr_consent" value="1" required style="margin-top:2px;">
+        <span>I consent to receive emails (Double opt-in, GDPR/CAN-SPAM compliant, 1-click unsubscribe anytime).</span>
+      </label>
+      <button type="submit" class="btn-primary">Subscribe Free</button>
+      <div class="newsletter-msg" aria-live="polite"></div>
+    </form>
+  </section>
+
+  <% if (typeof popularTags !== 'undefined' && Array.isArray(popularTags) && popularTags.length > 0) { %>
+  <section class="widget">
+    <h3 class="widget-title"><%- icon('tag', 17) %> Popular Topics</h3>
+    <div class="tag-cloud">
+      <% popularTags.forEach(function(tag) { %>
+      <a href="/tag/<%= tag.slug %>" class="tag-chip">#<%= tag.name %></a>
+      <% }) %>
+    </div>
+  </section>
+  <% } %>
+</aside>

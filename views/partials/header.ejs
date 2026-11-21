@@ -1,0 +1,166 @@
+<div class="topbar">
+  <div class="container topbar-inner">
+    <div class="topbar-edition">
+      <span class="pulse-dot" aria-hidden="true"></span>
+      <span>Tech &amp; AI Desk</span>
+      <span style="opacity:0.45;">|</span>
+      <a href="/briefing">Daily AI Brief</a>
+      <a href="/timelines">Timelines</a>
+      <a href="/ai-tools">AI Directory</a>
+    </div>
+    <nav class="topbar-links" aria-label="Editorial Links">
+      <a href="/my-feed">My Feed</a>
+      <a href="/saved">Saved</a>
+      <a href="/about">About</a>
+      <a href="/contact">News Tips</a>
+      <a href="/rss.xml">RSS</a>
+    </nav>
+  </div>
+</div>
+
+<% if (Array.isArray(breakingPosts) && breakingPosts.length > 0) {
+  const shortCatLabel = (name) => String(name || 'Tech')
+    .replace(' & Artificial Intelligence', '')
+    .replace('Technology News', 'Tech')
+    .replace('Technology', 'Tech')
+    .replace('Gadgets & Devices', 'Gadgets')
+    .replace('Software & Apps', 'Software')
+    .replace('Cybersecurity', 'Security')
+    .replace(' & Entertainment', '')
+    .replace(' & Comparisons', '');
+%>
+<div class="breaking-bar" aria-label="Trending Tech Stories">
+  <div class="container breaking-inner">
+    <span class="breaking-tag"><span class="ticker-pulse" aria-hidden="true"></span>TRENDING</span>
+    <div class="breaking-viewport">
+      <div class="breaking-track" style="--ticker-duration:<%= Math.max(24, breakingPosts.length * 10) %>s;">
+        <div class="breaking-links">
+          <% breakingPosts.forEach(function(bp) { %>
+          <a href="/article/<%= bp.slug %>"><span class="ticker-cat"><%= shortCatLabel(bp.category_name) %></span><span class="ticker-headline"><%= bp.title %></span></a>
+          <% }) %>
+        </div>
+        <div class="breaking-links" aria-hidden="true">
+          <% breakingPosts.forEach(function(bp) { %>
+          <a href="/article/<%= bp.slug %>" tabindex="-1"><span class="ticker-cat"><%= shortCatLabel(bp.category_name) %></span><span class="ticker-headline"><%= bp.title %></span></a>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<% } %>
+
+<header class="site-header">
+  <div class="container header-main">
+    <a href="/" class="brand-logo" aria-label="<%= settings.site_name || 'TechHavenUS' %> Home">
+      <img src="/logo.svg" alt="<%= settings.site_name || 'TechHavenUS' %>" class="brand-logo-img" width="180" height="44">
+    </a>
+
+    <nav class="nav-desktop" aria-label="Primary Navigation">
+      <a href="/" class="nav-link <%= currentPath === '/' ? 'active' : '' %>">Home</a>
+      <% categories.slice(0, 6).forEach(function(cat) {
+        const shortName = cat.name
+          .replace(' & Artificial Intelligence', '')
+          .replace('Technology News', 'Tech')
+          .replace('Technology', 'Tech')
+          .replace('Gadgets & Devices', 'Gadgets')
+          .replace('Software & Apps', 'Software')
+          .replace('Cybersecurity', 'Security')
+          .replace(' & Entertainment', '')
+          .replace(' & Comparisons', '');
+      %>
+      <a href="/category/<%= cat.slug %>" class="nav-link <%= currentPath === '/category/' + cat.slug ? 'active' : '' %>"><%= shortName %></a>
+      <% }) %>
+      <span class="nav-divider" aria-hidden="true"></span>
+      <a href="/ai-tools" class="nav-link <%= currentPath.startsWith('/ai-tools') ? 'active' : '' %>">AI Tools</a>
+      <a href="/videos" class="nav-link <%= currentPath.startsWith('/videos') ? 'active' : '' %>">Videos</a>
+      <a href="/briefing" class="nav-link <%= currentPath.startsWith('/briefing') ? 'active' : '' %>">Briefing</a>
+    </nav>
+
+    <div class="header-actions">
+      <button type="button" id="pushAlertBtn" class="icon-btn" aria-label="Toggle Breaking News Push Alerts">
+        <span class="btn-ico" aria-hidden="true"><%- icon('bell', 15) %></span><span class="btn-label">Alerts</span>
+      </button>
+      <button type="button" id="searchOpenBtn" class="icon-btn" aria-label="Search articles">
+        <span class="btn-ico" aria-hidden="true"><%- icon('search', 15) %></span><span class="btn-label">Search</span>
+      </button>
+      <button type="button" id="themeToggle" class="icon-btn" aria-label="Toggle color theme">
+        <span class="btn-ico" aria-hidden="true"><%- icon('moon', 15) %></span><span class="btn-label">Dark</span>
+      </button>
+      <button type="button" id="mobileMenuBtn" class="icon-btn mobile-menu-btn" aria-controls="mobileDrawer" aria-expanded="false" aria-label="Open Navigation Menu">
+        <span class="btn-ico" aria-hidden="true"><%- icon('menu', 18) %></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div id="mobileDrawerBackdrop" class="mobile-drawer-backdrop" aria-hidden="true"></div>
+<aside id="mobileDrawer" class="mobile-drawer" role="dialog" aria-modal="true" aria-label="Mobile Navigation" aria-hidden="true">
+  <div class="mobile-drawer-header">
+    <a href="/" class="brand-logo" aria-label="<%= settings.site_name || 'TechHavenUS' %> Home">
+      <img src="/logo.svg" alt="<%= settings.site_name || 'TechHavenUS' %>" class="brand-logo-img" width="136" height="31">
+    </a>
+    <button type="button" id="mobileDrawerClose" class="icon-btn mobile-drawer-close" aria-label="Close Navigation Menu"><%- icon('x', 18) %></button>
+  </div>
+
+  <div class="mobile-drawer-search">
+    <form action="/search" method="GET" class="mobile-drawer-search-form">
+      <input type="search" name="q" class="search-input" placeholder="Search AI, GTA 6, tech..." required>
+      <button type="submit" class="btn-primary btn-sm">Go</button>
+    </form>
+  </div>
+
+  <div class="mobile-drawer-quick-actions">
+    <button type="button" class="icon-btn js-push-toggle" aria-label="Toggle Breaking News Push Alerts">
+      <span class="btn-ico" aria-hidden="true"><%- icon('bell', 16) %></span><span class="btn-label">Alerts</span>
+    </button>
+    <button type="button" class="icon-btn js-theme-toggle" aria-label="Toggle color theme">
+      <span class="btn-ico" aria-hidden="true"><%- icon('moon', 16) %></span><span class="btn-label">Dark</span>
+    </button>
+  </div>
+
+  <nav class="mobile-drawer-scroll" aria-label="Mobile Menu">
+    <div class="mobile-drawer-section-title">Explore</div>
+    <div class="mobile-drawer-links">
+      <a href="/" class="nav-link <%= currentPath === '/' ? 'active' : '' %>"><span><%- icon('home', 16) %> Home</span></a>
+      <a href="/my-feed" class="nav-link <%= currentPath.startsWith('/my-feed') ? 'active' : '' %>"><span><%- icon('sparkles', 16) %> My Personalized Feed</span></a>
+      <a href="/briefing" class="nav-link <%= currentPath.startsWith('/briefing') ? 'active' : '' %>"><span><%- icon('zap', 16) %> Daily AI Briefing</span></a>
+      <a href="/videos" class="nav-link <%= currentPath.startsWith('/videos') ? 'active' : '' %>"><span><%- icon('clapperboard', 16) %> Video Reviews &amp; Shorts</span></a>
+      <a href="/ai-tools" class="nav-link <%= currentPath.startsWith('/ai-tools') ? 'active' : '' %>"><span><%- icon('wrench', 16) %> AI Tools Directory</span></a>
+      <a href="/timelines" class="nav-link <%= currentPath.startsWith('/timelines') ? 'active' : '' %>"><span><%- icon('clock', 16) %> Tech News Timelines</span></a>
+      <a href="/saved" class="nav-link <%= currentPath.startsWith('/saved') ? 'active' : '' %>"><span><%- icon('bookmark', 16) %> Saved Articles</span></a>
+    </div>
+
+    <div class="mobile-drawer-section-title">Categories</div>
+    <div class="mobile-drawer-links">
+      <% categories.forEach(function(cat) { %>
+      <a href="/category/<%= cat.slug %>" class="nav-link <%= currentPath === '/category/' + cat.slug ? 'active' : '' %>">
+        <span><%= cat.name %></span>
+        <span class="drawer-count"><%= cat.post_count %></span>
+      </a>
+      <% }) %>
+    </div>
+
+    <div class="mobile-drawer-section-title">Publisher</div>
+    <div class="mobile-drawer-links">
+      <a href="/about" class="nav-link <%= currentPath === '/about' ? 'active' : '' %>"><span>About Editorial Team</span></a>
+      <a href="/contact" class="nav-link <%= currentPath === '/contact' ? 'active' : '' %>"><span>Contact &amp; News Tips</span></a>
+    </div>
+  </nav>
+</aside>
+
+<div id="searchOverlay" class="search-overlay" role="dialog" aria-modal="true" aria-label="Search TechHaven US">
+  <div class="search-modal">
+    <form action="/search" method="GET" class="search-form-row">
+      <input id="modalSearchInput" type="search" name="q" class="search-input" placeholder="Search AI updates, GTA 6, hardware benchmarks, tutorials..." required>
+      <button type="submit" class="btn-primary">Search</button>
+      <button type="button" id="searchCloseBtn" class="icon-btn" aria-label="Close search"><%- icon('x', 16) %></button>
+    </form>
+  </div>
+</div>
+
+<% const headerAdHtml = renderAd('ads_slot_header', 'ad-slot-header'); if (headerAdHtml) { %>
+<div class="container">
+  <%- headerAdHtml %>
+</div>
+<% } %>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+  <title>WebP Media Library — TechHaven CMS</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+<div class="admin-shell">
+  <%- include('./sidebar') %>
+
+  <main class="admin-main">
+    <div class="admin-header">
+      <div>
+        <h1>Auto-WebP Media Library</h1>
+        <div style="font-size:0.88rem;color:#64748b;">Upload PNG, JPG, GIF, TIFF, BMP, AVIF, SVG, or WebP — every file automatically converts to optimized <strong>.webp</strong> with Title, Alt, Caption &amp; Description.</div>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="img-spec-grid">
+        <div class="img-spec-card">
+          <div class="img-spec-label">Featured / Hero Cover</div>
+          <div class="img-spec-val">1400 × 788 px</div>
+          <div class="img-spec-note">16:9 ratio • Min 1200 × 675 px for Google Discover</div>
+        </div>
+        <div class="img-spec-card">
+          <div class="img-spec-label">In-Article Body Image</div>
+          <div class="img-spec-val">1200 × 675 px</div>
+          <div class="img-spec-note">16:9 or 1200 × 900 px (4:3) • 800–1200 px wide</div>
+        </div>
+        <div class="img-spec-card">
+          <div class="img-spec-label">Card Thumbnail (Auto)</div>
+          <div class="img-spec-val">640 × 360 px</div>
+          <div class="img-spec-note">Auto-generated 16:9 WebP crop on upload</div>
+        </div>
+        <div class="img-spec-card">
+          <div class="img-spec-label">Social Share Card (Auto)</div>
+          <div class="img-spec-val">1200 × 630 px</div>
+          <div class="img-spec-note">Auto PNG card at <code>/og/:slug.png</code></div>
+        </div>
+      </div>
+
+      <div class="admin-grid-2" style="margin-bottom:0.85rem;">
+        <div class="field" style="margin-bottom:0;">
+          <label for="newMediaTitle">Default Image Title</label>
+          <input id="newMediaTitle" type="text" placeholder="Optional SEO title before upload">
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label for="newMediaAlt">Default Alt Text</label>
+          <input id="newMediaAlt" type="text" placeholder="Optional accessibility alt text">
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label for="newMediaCaption">Default Image Caption</label>
+          <input id="newMediaCaption" type="text" placeholder="Optional photo credit / caption">
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label for="newMediaDescription">Default Image Description (SEO)</label>
+          <input id="newMediaDescription" type="text" placeholder="Detailed SEO description for Google Images">
+        </div>
+      </div>
+
+      <div id="mediaLibraryDropzone" class="dropzone">
+        <input id="mediaLibraryInput" type="file" accept="image/*" multiple style="display:none;">
+        <div style="font-size:1rem;font-weight:700;">Drop one or multiple images here (or click to browse)</div>
+        <div style="font-size:0.84rem;color:#64748b;margin-top:0.25rem;">Recommended: <strong>1400 × 788 px</strong> (Featured) or <strong>1200 × 675 px</strong> (In-Article) • Max 15MB • Auto-WebP</div>
+      </div>
+      <div id="mediaUploadProgress" style="margin-top:0.65rem;font-weight:600;color:#2563eb;"></div>
+    </section>
+
+    <section class="media-grid">
+      <% mediaList.forEach(function(m) {
+        const savedPct = m.original_size > 0 ? Math.max(0, Math.round(((m.original_size - m.webp_size) / m.original_size) * 100)) : 0;
+      %>
+      <div class="media-card">
+        <img src="<%= m.thumb_url || m.url %>" alt="<%= m.alt_text %>" loading="lazy">
+        <div class="media-card-body">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.45rem;">
+            <span class="badge badge-webp"><%= (m.original_format || 'img').toUpperCase() %> &rarr; WEBP (-<%= savedPct %>%)</span>
+            <span style="font-size:0.75rem;color:#64748b;"><%= m.width %>×<%= m.height %></span>
+          </div>
+          <div style="font-size:0.76rem;color:#64748b;margin-bottom:0.6rem;">
+            <%= formatBytes(m.original_size) %> &rarr; <strong><%= formatBytes(m.webp_size) %></strong>
+          </div>
+
+          <form class="js-save-media-meta" data-id="<%= m.id %>">
+            <div class="field" style="margin-bottom:0.45rem;">
+              <input type="text" name="title" value="<%= m.title %>" placeholder="Image Title" style="padding:0.38rem 0.5rem;font-size:0.8rem;">
+            </div>
+            <div class="field" style="margin-bottom:0.45rem;">
+              <input type="text" name="alt_text" value="<%= m.alt_text %>" placeholder="Alt Text" style="padding:0.38rem 0.5rem;font-size:0.8rem;">
+            </div>
+            <div class="field" style="margin-bottom:0.45rem;">
+              <input type="text" name="caption" value="<%= m.caption %>" placeholder="Caption" style="padding:0.38rem 0.5rem;font-size:0.8rem;">
+            </div>
+            <div class="field" style="margin-bottom:0.55rem;">
+              <textarea name="description" rows="2" placeholder="Image Description (SEO)" style="padding:0.38rem 0.5rem;font-size:0.8rem;"><%= m.description || '' %></textarea>
+            </div>
+            <div style="display:flex;gap:0.35rem;flex-wrap:wrap;align-items:center;">
+              <button type="submit" class="btn btn-primary btn-sm">Save Meta</button>
+              <button type="button" class="btn btn-outline btn-sm js-copy-url" data-copy="<%= m.url %>">Copy URL</button>
+              <button type="button" class="btn btn-danger btn-sm js-delete-media" data-id="<%= m.id %>">Delete</button>
+              <span class="js-meta-status" style="font-size:0.76rem;color:#16a34a;font-weight:700;"></span>
+            </div>
+          </form>
+        </div>
+      </div>
+      <% }) %>
+    </section>
+  </main>
+</div>
+
+<script src="/js/admin.js"></script>
+</body>
+</html>

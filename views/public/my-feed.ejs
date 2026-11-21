@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<%- include('../partials/head') %>
+<body>
+<%- include('../partials/header') %>
+
+<main class="main-content container">
+  <header style="margin-bottom:1.5rem;">
+    <span class="cat-pill" style="--cat-color:#2563EB">Personalized Feed</span>
+    <h1 style="margin:0.45rem 0 0.35rem;font-size:2rem;font-weight:850;display:flex;align-items:center;gap:0.5rem;"><%- icon('sparkles', 26) %> My Personalized News Feed</h1>
+    <p style="margin:0;color:var(--text-muted);">Choose the tech topics and categories you want to follow.</p>
+  </header>
+
+  <section class="widget" style="margin-bottom:1.75rem;">
+    <form id="prefsForm">
+      <div style="margin-bottom:0.95rem;">
+        <strong style="display:block;font-size:0.86rem;margin-bottom:0.45rem;">Follow Categories:</strong>
+        <div style="display:flex;flex-wrap:wrap;gap:0.65rem;">
+          <% categories.forEach(function(cat) { %>
+          <label style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.88rem;cursor:pointer;">
+            <input type="checkbox" name="categories" value="<%= cat.slug %>" <%= selectedCats.includes(cat.slug) ? 'checked' : '' %>>
+            <%= cat.name %>
+          </label>
+          <% }) %>
+        </div>
+      </div>
+      <button type="submit" class="btn-primary">Save Feed Preferences</button>
+    </form>
+  </section>
+
+  <div class="layout-split">
+    <div class="posts-grid two-col">
+      <% posts.forEach(function(post) { %>
+      <article class="post-card">
+        <% if (post.featured_image_thumb || post.featured_image) { %>
+        <a href="/article/<%= post.slug %>" class="post-card-img">
+          <img src="<%= assetUrl(post.featured_image_thumb || post.featured_image) %>" alt="<%= post.featured_image_alt || post.title %>" width="640" height="360" loading="lazy">
+        </a>
+        <% } %>
+        <div class="post-card-body">
+          <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+            <% if (post.category_name) { %>
+            <a href="/category/<%= post.category_slug %>" class="cat-pill" style="--cat-color:<%= post.category_color || '#2563EB' %>"><%= post.category_name %></a>
+            <% } %>
+          </div>
+          <h2 class="post-card-title"><a href="/article/<%= post.slug %>"><%= post.title %></a></h2>
+          <p class="post-card-excerpt"><%= post.excerpt %></p>
+        </div>
+      </article>
+      <% }) %>
+    </div>
+
+    <%- include('../partials/sidebar') %>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>
+</body>
+</html>

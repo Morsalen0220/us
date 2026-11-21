@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+  <title>Backups &amp; System Health — TechHaven CMS</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+<div class="admin-shell">
+  <%- include('./sidebar') %>
+
+  <main class="admin-main">
+    <div class="admin-header">
+      <div>
+        <h1>Automated Backups, Health &amp; Error Monitoring</h1>
+        <div style="font-size:0.88rem;color:#64748b;">SQLite hot snapshots, server uptime metrics, and error logs. Uptime endpoint: <code>/health</code></div>
+      </div>
+      <form action="/admin/system/backup" method="POST">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="btn btn-primary">+ Create SQLite Backup Now</button>
+      </form>
+    </div>
+
+    <% if (flash) { %><div class="alert alert-success"><%= flash %></div><% } %>
+
+    <div class="kpi-grid">
+      <div class="card" style="margin-bottom:0;">
+        <div class="kpi-label">Node.js Runtime</div>
+        <div class="kpi-val"><%= health.nodeVersion %></div>
+        <div class="kpi-sub">Uptime: <%= health.uptimeSec %>s</div>
+      </div>
+      <div class="card" style="margin-bottom:0;">
+        <div class="kpi-label">Memory Usage</div>
+        <div class="kpi-val"><%= health.rssMb %> MB</div>
+        <div class="kpi-sub">Heap: <%= health.heapUsedMb %> MB</div>
+      </div>
+      <div class="card" style="margin-bottom:0;">
+        <div class="kpi-label">SSR Page Cache</div>
+        <div class="kpi-val"><%= health.cacheEntries %></div>
+        <div class="kpi-sub">Sub-5ms cached responses</div>
+      </div>
+    </div>
+
+    <div class="admin-grid-2" style="gap:1.25rem;align-items:start;">
+      <section class="card">
+        <h2 style="margin:0 0 0.85rem;font-size:1.05rem;">Database Backups (<%= backups.length %>)</h2>
+        <% if (!backups.length) { %><p style="color:#64748b;">No backups yet. Click Create SQLite Backup Now above.</p><% } else { %>
+        <div class="table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>File</th><th>Size</th><th>Download</th></tr></thead>
+            <tbody>
+              <% backups.forEach(function(b) { %>
+              <tr>
+                <td><code><%= b.filename %></code></td>
+                <td><%= formatBytes(b.size) %></td>
+                <td><a href="/admin/system/backups/<%= b.filename %>" class="btn btn-outline btn-sm">Download .db</a></td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+        <% } %>
+      </section>
+
+      <section class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.85rem;">
+          <h2 style="margin:0;font-size:1.05rem;">Server Error Monitor (<%= errorLogs.length %>)</h2>
+          <form action="/admin/system/errors/clear" method="POST">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="btn btn-outline btn-sm">Clear Logs</button>
+          </form>
+        </div>
+        <% if (!errorLogs.length) { %>
+        <p style="color:#16a34a;font-weight:600;display:flex;align-items:center;gap:0.4rem;"><%- icon('check', 16) %> Zero uncaught server errors recorded.</p>
+        <% } else { %>
+        <% errorLogs.forEach(function(e) { %>
+        <div style="padding:0.65rem;border:1px solid #fecaca;background:#fef2f2;border-radius:8px;margin-bottom:0.5rem;font-size:0.82rem;">
+          <strong><%= e.method %> <%= e.path %></strong> — <%= e.created_at %>
+          <div><%= e.message %></div>
+        </div>
+        <% }) %>
+        <% } %>
+      </section>
+    </div>
+
+    <section class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.85rem;">
+        <h2 style="margin:0;font-size:1.05rem;"><%- icon('lock', 18) %> Login Security &amp; Brute-Force Audit Log</h2>
+        <form action="/admin/system/unlock-logins" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="btn btn-outline btn-sm">Reset Failed Lockouts</button>
+        </form>
+      </div>
+      <% if (!loginAttempts || !loginAttempts.length) { %>
+      <p style="color:#64748b;">No login attempts recorded yet.</p>
+      <% } else { %>
+      <div class="table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>Status</th><th>IP Address</th><th>Email Attempted</th><th>Timestamp (UTC)</th></tr></thead>
+          <tbody>
+            <% loginAttempts.slice(0, 15).forEach(function(la) { %>
+            <tr>
+              <td><span class="badge <%= la.success ? 'badge-pub' : 'badge-draft' %>"><%= la.success ? 'Success' : 'Failed' %></span></td>
+              <td><code><%= la.ip %></code></td>
+              <td><%= la.email %></td>
+              <td style="font-size:0.78rem;color:#64748b;"><%= la.created_at %></td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% } %>
+    </section>
+  </main>
+</div>
+</body>
+</html>

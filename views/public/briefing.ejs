@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<%- include('../partials/head') %>
+<body>
+<%- include('../partials/header') %>
+
+<main class="main-content container">
+  <header style="margin-bottom:1.75rem;padding-bottom:1rem;border-bottom:2px solid var(--border);">
+    <span class="cat-pill" style="--cat-color:#2563EB">Daily AI Briefing</span>
+    <h1 style="margin:0.45rem 0 0.35rem;font-size:2rem;font-weight:850;display:flex;align-items:center;gap:0.5rem;"><%- icon('zap', 26) %> Daily AI &amp; Tech Briefings</h1>
+    <p style="margin:0;color:var(--text-muted);">Fast executive summaries of today’s most important AI, tech policy, and gaming developments.</p>
+  </header>
+
+  <div class="layout-split">
+    <div>
+      <% if (activeBriefing) { %>
+      <article class="page-card" style="margin-bottom:1.75rem;">
+        <div style="font-size:0.82rem;font-weight:700;color:var(--accent);text-transform:uppercase;"><%= activeBriefing.briefing_date %></div>
+        <h2 style="margin:0.35rem 0 0.5rem;"><%= activeBriefing.title %></h2>
+        <p style="color:var(--text-muted);margin-bottom:1.25rem;"><%= activeBriefing.summary %></p>
+
+        <div style="display:flex;flex-direction:column;gap:0.9rem;">
+          <% activeBriefing.items.forEach(function(it) { %>
+          <div style="padding:0.95rem 1.05rem;border:1px solid var(--border);border-radius:12px;background:var(--surface-alt);">
+            <span class="cat-pill" style="--cat-color:#2563EB"><%= it.tag %></span>
+            <h3 style="margin:0.45rem 0 0.3rem;font-size:1.08rem;">
+              <% if (it.url) { %><a href="<%= it.url %>" style="color:var(--text);"><%= it.headline %> &rarr;</a><% } else { %><%= it.headline %><% } %>
+            </h3>
+            <p style="margin:0;font-size:0.92rem;color:var(--text-muted);"><%= it.summary %></p>
+          </div>
+          <% }) %>
+        </div>
+      </article>
+      <% } %>
+
+      <% if (briefings.length > 1) { %>
+      <div class="section-header">
+        <h2 class="section-title">Recent Briefings</h2>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0.75rem;">
+        <% briefings.forEach(function(b) { %>
+        <a href="/briefing/<%= b.slug %>" class="widget" style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <strong><%= b.title %></strong>
+            <div style="font-size:0.84rem;color:var(--text-muted);"><%= b.summary %></div>
+          </div>
+          <span style="font-size:0.82rem;color:var(--accent);font-weight:700;white-space:nowrap;">Read &rarr;</span>
+        </a>
+        <% }) %>
+      </div>
+      <% } %>
+    </div>
+
+    <%- include('../partials/sidebar') %>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>
+</body>
+</html>

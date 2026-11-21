@@ -1,0 +1,93 @@
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title><%= seo.title || settings.site_name || 'TechHaven US' %></title>
+  <meta name="description" content="<%= seo.description || settings.site_description || '' %>">
+  <% if (seo.subtitle) { %>
+  <meta name="subtitle" content="<%= seo.subtitle %>">
+  <% } %>
+  <% if (seo.tags) { %>
+  <meta name="keywords" content="<%= seo.tags %>">
+  <% } %>
+  <meta name="robots" content="<%= seo.robots || 'index, follow' %>, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <meta name="googlebot" content="<%= seo.robots || 'index, follow' %>, max-image-preview:large">
+  <meta name="theme-color" content="#0f172a">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.png" type="image/png" sizes="192x192">
+  <link rel="apple-touch-icon" href="/favicon.png">
+  <link rel="canonical" href="<%= seo.canonical || (siteUrl + currentPath) %>">
+  <% const canonicalHref = seo.canonical || (siteUrl + currentPath); %>
+  <link rel="alternate" hreflang="en-US" href="<%= canonicalHref %>">
+  <link rel="alternate" hreflang="x-default" href="<%= canonicalHref %>">
+  <link rel="alternate" type="application/rss+xml" title="<%= settings.site_name || 'TechHaven US' %> RSS Feed" href="<%= siteUrl %>/rss.xml">
+
+  <!-- Open Graph / Social -->
+  <meta property="og:site_name" content="<%= settings.site_name || 'TechHaven US' %>">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="<%= seo.ogType || 'website' %>">
+  <meta property="og:title" content="<%= seo.title || settings.site_name || 'TechHaven US' %>">
+  <meta property="og:description" content="<%= seo.description || settings.site_description || '' %>">
+  <meta property="og:url" content="<%= seo.canonical || (siteUrl + currentPath) %>">
+  <% if (seo.ogImage) { %>
+  <meta property="og:image" content="<%= seo.ogImage %>">
+  <% if (seo.ogImageWidth) { %><meta property="og:image:width" content="<%= seo.ogImageWidth %>"><% } %>
+  <% if (seo.ogImageHeight) { %><meta property="og:image:height" content="<%= seo.ogImageHeight %>"><% } %>
+  <meta property="og:image:alt" content="<%= seo.ogImageAlt || seo.title || 'TechHaven US' %>">
+  <% } %>
+  <% if (seo.ogType === 'article') { %>
+  <meta property="article:published_time" content="<%= seo.publishedAt || '' %>">
+  <meta property="article:modified_time" content="<%= seo.modifiedAt || seo.publishedAt || '' %>">
+  <meta property="article:section" content="<%= seo.section || 'Technology' %>">
+  <% } %>
+
+  <!-- Twitter Cards -->
+  <meta name="twitter:card" content="summary_large_image">
+  <% if (settings.twitter_handle) { %>
+  <meta name="twitter:site" content="<%= settings.twitter_handle %>">
+  <% } %>
+  <meta name="twitter:title" content="<%= seo.title || settings.site_name || 'TechHaven US' %>">
+  <meta name="twitter:description" content="<%= seo.description || settings.site_description || '' %>">
+  <% if (seo.ogImage) { %>
+  <meta name="twitter:image" content="<%= seo.ogImage %>">
+  <% } %>
+
+  <% if (settings.google_site_verification) { %>
+  <meta name="google-site-verification" content="<%= settings.google_site_verification %>">
+  <% } %>
+  <% if (settings.bing_site_verification) { %>
+  <meta name="msvalidate.01" content="<%= settings.bing_site_verification %>">
+  <% } %>
+
+  <link rel="preload" href="/css/style.css?v=24" as="style">
+  <link rel="stylesheet" href="/css/style.css?v=24">
+  <% if (seo.lcpImage) { %>
+  <link rel="preload" as="image" href="<%= seo.lcpImage %>"<% if (seo.lcpImageSrcset) { %> imagesrcset="<%= seo.lcpImageSrcset %>" imagesizes="<%= seo.lcpImageSizes || '(max-width: 768px) 100vw, 760px' %>"<% } %> fetchpriority="high">
+  <% } %>
+
+  <% if (Array.isArray(jsonLdList)) { jsonLdList.forEach(function(schema) { %>
+  <script type="application/ld+json"><%- schema %></script>
+  <% }); } %>
+
+  <% if (settings.ga_measurement_id) { %>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('consent', 'default', {
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      analytics_storage: 'granted'
+    });
+  </script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=<%= settings.ga_measurement_id %>"></script>
+  <script>
+    gtag('js', new Date());
+    gtag('config', '<%= settings.ga_measurement_id %>');
+  </script>
+  <% } %>
+
+  <% if (settings.ads_slots_visible === '1' && settings.ads_enabled === '1' && settings.adsense_publisher_id) { %>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=<%= settings.adsense_publisher_id %>" crossorigin="anonymous"></script>
+  <% } %>
+</head>

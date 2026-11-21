@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<%- include('../partials/head') %>
+<body>
+<%- include('../partials/header') %>
+
+<main class="main-content container">
+  <header style="margin-bottom:1.75rem;padding-bottom:1rem;border-bottom:2px solid var(--border);">
+    <span class="cat-pill" style="--cat-color:#7C3AED">Story Trackers</span>
+    <h1 style="margin:0.45rem 0 0.35rem;font-size:2rem;font-weight:850;display:flex;align-items:center;gap:0.5rem;"><%- icon('clock', 26) %> Tech News Timelines</h1>
+    <p style="margin:0;color:var(--text-muted);">Follow unfolding multi-month tech, gaming, and regulatory sagas in one chronological view.</p>
+  </header>
+
+  <div class="layout-split">
+    <div style="display:flex;flex-direction:column;gap:1.1rem;">
+      <% timelines.forEach(function(tl) { %>
+      <article class="widget">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+          <span class="cat-pill" style="--cat-color:#2563EB">Story Timeline</span>
+          <span style="font-size:0.8rem;color:var(--text-soft);"><%= tl.event_count %> verified updates</span>
+        </div>
+        <h2 style="margin:0.55rem 0 0.35rem;font-size:1.3rem;">
+          <a href="/timeline/<%= tl.slug %>" style="color:var(--text);"><%= tl.title %></a>
+        </h2>
+        <p style="margin:0 0 0.85rem;color:var(--text-muted);"><%= tl.description %></p>
+        <a href="/timeline/<%= tl.slug %>" class="btn-primary">Open Full Timeline &rarr;</a>
+      </article>
+      <% }) %>
+    </div>
+
+    <%- include('../partials/sidebar') %>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>
+</body>
+</html>

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<%- include('../partials/head') %>
+<body>
+<div id="readProgress" class="read-progress" aria-hidden="true"></div>
+<%- include('../partials/header') %>
+
+<main class="main-content container">
+  <% if (typeof isPreview !== 'undefined' && isPreview) { %>
+  <div class="preview-banner" role="region" aria-label="Article Preview Notice">
+    <div class="preview-banner-info">
+      <span class="preview-pill">PREVIEW MODE &bull; <%= (typeof previewStatus !== 'undefined' && previewStatus ? previewStatus : 'draft').toUpperCase() %></span>
+      <span>This preview is visible only to logged-in editors and is not published publicly.</span>
+    </div>
+    <div class="preview-banner-actions">
+      <% if (post.id) { %>
+      <a href="/admin/posts/<%= post.id %>/edit" class="btn-outline" style="padding:0.4rem 0.75rem;font-size:0.84rem;border-radius:8px;text-decoration:none;">&larr; Back to Editor</a>
+      <% } %>
+      <button type="button" class="btn-primary" style="padding:0.4rem 0.85rem;font-size:0.84rem;border-radius:8px;" onclick="if (window.opener && !window.opener.closed) { window.close(); } else { history.back(); }">Close Preview</button>
+    </div>
+  </div>
+  <% } %>
+
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <a href="/">Home</a>
+    <span>/</span>
+    <% if (post.category_name) { %>
+    <a href="/category/<%= post.category_slug %>"><%= post.category_name %></a>
+    <span>/</span>
+    <% } %>
+    <span aria-current="page"><%= post.title %></span>
+  </nav>
+
+  <div class="layout-split">
+    <article id="articleBody">
+      <header class="article-header">
+        <div class="trust-badges">
+          <% if (post.category_name) { %>
+          <a href="/category/<%= post.category_slug %>" class="cat-pill" style="--cat-color:<%= post.category_color || '#2563EB' %>"><%= post.category_name %></a>
+          <% } %>
+          <% if (post.fact_check_status) { %>
+          <span class="trust-pill"><%- icon('check', 13) %> <%= post.fact_check_status %><%= post.last_fact_checked ? ' • ' + post.last_fact_checked : '' %></span>
+          <% } %>
+        </div>
+
+        <h1 class="article-title"><%= post.title %></h1>
+
+        <% if (post.subtitle) { %>
+        <p class="article-subtitle"><%= post.subtitle %></p>
+        <% } %>
+
+        <div class="article-byline">
+          <div class="meta-line">
+            <span>By <a href="/author/<%= post.author_slug || 'alex-mercer' %>" style="font-weight:700;color:var(--text);"><%= post.author_name || 'TechHaven Editorial' %></a></span>
+            <% if (post.author_job_title) { %>
+            <span>(<%= post.author_job_title %>)</span>
+            <% } %>
+            <span>•</span>
+            <span>Published <time datetime="<%= post.published_at %>"><%= formatDate(post.published_at) %></time></span>
+            <% if (post.last_fact_checked) { %>
+            <span>•</span>
+            <span>Last Fact-Checked: <strong><%= post.last_fact_checked %></strong></span>
+            <% } %>
+            <span>•</span>
+            <span><%= post.reading_time %> min read (<%= post.word_count %> words)</span>
+          </div>
+
+          <div class="share-row">
+            <button type="button" id="saveArticleBtn" class="share-btn" data-slug="<%= post.slug %>" data-post-id="<%= post.id %>"><span class="btn-ico"><%- icon('bookmark', 15) %></span><span class="btn-label">Save</span></button>
+            <button type="button" id="printArticleBtn" class="share-btn"><%- icon('printer', 15) %> Print</button>
+            <button type="button" id="copyArticleLink" class="share-btn">Copy Link</button>
+          </div>
+          <% if (typeof shareLinks !== 'undefined' && shareLinks) { %>
+          <div class="share-social-strip" aria-label="Share on social platforms">
+            <a class="share-btn" href="<%= shareLinks.x %>" target="_blank" rel="noopener noreferrer">X / Twitter</a>
+            <a class="share-btn" href="<%= shareLinks.bluesky %>" target="_blank" rel="noopener noreferrer">Bluesky</a>
+            <a class="share-btn" href="<%= shareLinks.reddit %>" target="_blank" rel="noopener noreferrer">Reddit</a>
+            <a class="share-btn" href="<%= shareLinks.linkedin %>" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+            <a class="share-btn" href="<%= shareLinks.hackernews %>" target="_blank" rel="noopener noreferrer">Hacker News</a>
+            <a class="share-btn" href="/og/<%= post.slug %>.png" target="_blank" rel="noopener"><%- icon('image', 15) %> Social Card</a>
+          </div>
+          <% } %>
+        </div>
+      </header>
+
+      <% if (typeof videoInfo !== 'undefined' && videoInfo) { %>
+      <section class="yt-lite <%= (videoInfo.isShort || post.video_is_short) ? 'yt-lite-short' : '' %>" data-yt-id="<%= videoInfo.videoId %>" data-yt-title="<%= post.video_title || post.title %>" data-yt-short="<%= (videoInfo.isShort || post.video_is_short) ? '1' : '0' %>" aria-label="Embedded Video Review">
+        <img src="<%= videoInfo.thumbnailUrl %>" alt="<%= post.video_title || post.title %>" loading="lazy">
+        <button type="button" class="yt-play-btn" aria-label="Play Video: <%= post.video_title || post.title %>"><%- icon('play', 22) %></button>
+        <span class="yt-badge"><%= (videoInfo.isShort || post.video_is_short) ? 'YOUTUBE SHORTS' : ('VIDEO REVIEW' + (post.video_duration ? ' • ' + post.video_duration : '')) %></span>
+      </section>
+      <% } %>
+
+      <% if (post.featured_image) { %>
+      <figure class="article-hero-figure">
+        <img
+          src="<%= assetUrl(post.featured_image) %>"
+          <% if (post.featured_image_thumb) { %>srcset="<%= assetUrl(post.featured_image_thumb) %> 640w, <%= assetUrl(post.featured_image) %> 1400w" sizes="(max-width: 768px) 100vw, (max-width: 1200px) 68vw, 820px"<% } %>
+          alt="<%= post.featured_image_alt || post.title %>"
+          title="<%= post.featured_image_title || post.title %>"
+          aria-description="<%= post.featured_image_description || post.featured_image_alt || '' %>"
+          data-description="<%= post.featured_image_description || '' %>"
+          width="<%= post.featured_image_width || 1400 %>"
+          height="<%= post.featured_image_height || 788 %>"
+          fetchpriority="high"
+          decoding="async"
+        >
+        <% if (post.featured_image_caption || post.featured_image_title) { %>
+        <figcaption><%= post.featured_image_caption || post.featured_image_title %></figcaption>
+        <% } %>
+      </figure>
+      <% } %>
+
+      <% if (post.whats_new) { %>
+      <section class="whats-new-box" aria-label="What's New">
+        <strong style="display:inline-flex;align-items:center;gap:0.35rem;"><%- icon('zap', 16) %> What’s New:</strong> <%= post.whats_new %>
+      </section>
+      <% } %>
+
+      <% if (Array.isArray(keyTakeaways) && keyTakeaways.length > 0) { %>
+      <section class="takeaways-box" aria-label="Key Takeaways">
+        <h2 style="display:flex;align-items:center;gap:0.45rem;"><%- icon('pin', 18) %> Key Takeaways</h2>
+        <ul>
+          <% keyTakeaways.forEach(function(pt) { %>
+          <li><%= pt %></li>
+          <% }) %>
+        </ul>
+      </section>
+      <% } %>
+
+      <%- renderAd('ads_slot_article_top') %>
+
+      <% if (Array.isArray(toc) && toc.length >= 2) { %>
+      <nav class="toc-box" aria-label="Table of Contents">
+        <h2 class="toc-title">In This Article</h2>
+        <ol class="toc-list">
+          <% toc.forEach(function(item) { %>
+          <li class="<%= item.level === 3 ? 'toc-item-h3' : '' %>">
+            <a href="#<%= item.id %>"><%= item.text %></a>
+          </li>
+          <% }) %>
+        </ol>
+      </nav>
+      <% } %>
+
+      <div class="article-prose">
+        <%- articleBodyHtml %>
+      </div>
+
+      <% if (typeof isPreview === 'undefined' || !isPreview) { %>
+      <!-- AI Article Assistant (Grounded strictly in verified article content) -->
+      <section class="ai-assistant-box" aria-label="AI Article Assistant">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;">
+          <h3 style="margin:0;font-size:1.02rem;display:flex;align-items:center;gap:0.4rem;"><%- icon('bot', 18) %> AI Article Assistant</h3>
+          <span style="font-size:0.75rem;color:var(--text-soft);font-weight:600;">Answers strictly from this verified article</span>
+        </div>
+        <div class="ai-quick-chips">
+          <button type="button" class="ai-chip-btn" data-ai-prompt="Summarize the key takeaways">Summarize Key Takeaways</button>
+          <button type="button" class="ai-chip-btn" data-ai-prompt="What are the official sources?">Official Sources</button>
+          <button type="button" class="ai-chip-btn" data-ai-prompt="What is new or updated in this story?">What's New?</button>
+        </div>
+        <form id="aiAssistantForm" data-post-id="<%= post.id %>" style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+          <input id="aiQuestionInput" type="text" class="search-input" style="padding:0.55rem 0.85rem;font-size:0.9rem;" placeholder="Ask a question about facts inside this article..." required>
+          <button type="submit" class="btn-primary">Ask Assistant</button>
+        </form>
+        <div id="aiAnswerBox" class="ai-answer-box" aria-live="polite"></div>
+      </section>
+      <% } else { %>
+      <section class="ai-assistant-box" aria-label="AI Article Assistant Preview">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;">
+          <h3 style="margin:0;font-size:1.02rem;display:flex;align-items:center;gap:0.4rem;"><%- icon('bot', 18) %> AI Article Assistant</h3>
+          <span style="font-size:0.78rem;color:var(--text-soft);font-weight:600;">Enabled automatically once article is published</span>
+        </div>
+      </section>
+      <% } %>
+
+      <!-- Official Sources & Primary Citations -->
+      <% if (Array.isArray(officialSources) && officialSources.length > 0) { %>
+      <section class="sources-box" aria-label="Official Sources">
+        <h3 style="margin:0;font-size:1rem;display:flex;align-items:center;gap:0.4rem;"><%- icon('link', 17) %> Official Sources &amp; References</h3>
+        <ul class="sources-list">
+          <% officialSources.forEach(function(src) { %>
+          <li><a href="<%= src.url %>" target="_blank" rel="noopener noreferrer nofollow"><%= src.label || src.url %></a></li>
+          <% }) %>
+        </ul>
+      </section>
+      <% } %>
+
+      <!-- Correction History -->
+      <section class="corrections-box" aria-label="Correction History">
+        <h3 style="margin:0 0 0.4rem;font-size:0.96rem;display:flex;align-items:center;gap:0.4rem;"><%- icon('file-edit', 16) %> Correction &amp; Fact-Check History</h3>
+        <% if (Array.isArray(corrections) && corrections.length > 0) { %>
+        <ul style="margin:0;padding-left:1.2rem;font-size:0.88rem;color:var(--text-muted);">
+          <% corrections.forEach(function(c) { %>
+          <li><strong><%= c.date %>:</strong> <%= c.note %></li>
+          <% }) %>
+        </ul>
+        <% } else { %>
+        <p style="margin:0;font-size:0.86rem;color:var(--text-soft);">No corrections issued. Last reviewed on <%= post.last_fact_checked || formatDate(post.updated_at) %> under our <a href="/editorial-policy" style="color:var(--accent);text-decoration:underline;">Editorial Policy</a>.</p>
+        <% } %>
+      </section>
+
+      <% if (typeof isPreview === 'undefined' || !isPreview) { %>
+      <!-- Article Feedback (Helpful / Not Helpful) -->
+      <section id="articleFeedbackBar" class="feedback-bar" data-post-id="<%= post.id %>" aria-label="Article Feedback">
+        <div>
+          <strong>Was this article helpful?</strong>
+          <div id="feedbackStatus" style="font-size:0.8rem;color:var(--text-soft);">Help us improve our tech coverage</div>
+        </div>
+        <div style="display:flex;gap:0.5rem;">
+          <button type="button" class="feedback-btn" data-vote="yes"><%- icon('thumbs-up', 15) %> Helpful (<span id="yesCount"><%= post.helpful_yes || 0 %></span>)</button>
+          <button type="button" class="feedback-btn" data-vote="no"><%- icon('thumbs-down', 15) %> Not Helpful (<span id="noCount"><%= post.helpful_no || 0 %></span>)</button>
+        </div>
+      </section>
+      <% } %>
+
+      <% if (Array.isArray(tags) && tags.length > 0) { %>
+      <div style="margin:1.75rem 0;">
+        <div style="font-size:0.82rem;font-weight:700;color:var(--text-soft);margin-bottom:0.5rem;">TOPICS &amp; TAGS</div>
+        <div class="tag-cloud">
+          <% tags.forEach(function(tag) { %>
+          <a href="/tag/<%= tag.slug %>" class="tag-chip">#<%= tag.name %></a>
+          <% }) %>
+        </div>
+      </div>
+      <% } %>
+
+      <%- renderAd('ads_slot_article_bottom') %>
+
+      <!-- Author Bio + Expertise (E-E-A-T) -->
+      <section class="author-box" aria-label="About the Author">
+        <div class="author-avatar"><%= (post.author_name || 'A').slice(0, 1).toUpperCase() %></div>
+        <div>
+          <div style="font-size:0.74rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--accent);">Reviewed &amp; Written By</div>
+          <h3 style="margin:0.15rem 0 0.25rem;font-size:1.05rem;">
+            <a href="/author/<%= post.author_slug || 'alex-mercer' %>"><%= post.author_name || 'Alex Mercer' %></a>
+            <% if (post.author_job_title) { %><span style="font-weight:500;font-size:0.86rem;color:var(--text-soft);"> — <%= post.author_job_title %></span><% } %>
+          </h3>
+          <% if (post.author_expertise) { %>
+          <div style="font-size:0.8rem;font-weight:600;color:var(--text-soft);margin-bottom:0.35rem;">Expertise: <%= post.author_expertise %></div>
+          <% } %>
+          <p style="margin:0;font-size:0.88rem;color:var(--text-muted);"><%= post.author_bio || 'Technology & Gaming Editor covering US and European tech, AI, and web engineering.' %></p>
+        </div>
+      </section>
+
+      <% if (relatedPosts && relatedPosts.length > 0) { %>
+      <section style="margin-top:2.25rem;" aria-label="Related Stories">
+        <div class="section-header">
+          <h2 class="section-title">Keep Reading</h2>
+        </div>
+        <div class="posts-grid two-col">
+          <% relatedPosts.forEach(function(rel) { %>
+          <article class="post-card">
+            <% if (rel.featured_image_thumb || rel.featured_image) { %>
+            <a href="/article/<%= rel.slug %>" class="post-card-img">
+              <img src="<%= assetUrl(rel.featured_image_thumb || rel.featured_image) %>" alt="<%= rel.featured_image_alt || rel.title %>" width="640" height="360" loading="lazy">
+            </a>
+            <% } %>
+            <div class="post-card-body">
+              <h3 class="post-card-title"><a href="/article/<%= rel.slug %>"><%= rel.title %></a></h3>
+              <div class="meta-line" style="margin-top:auto;">
+                <time datetime="<%= rel.published_at %>"><%= formatDate(rel.published_at) %></time>
+                <span>•</span>
+                <span><%= rel.reading_time %> min read</span>
+              </div>
+            </div>
+          </article>
+          <% }) %>
+        </div>
+      </section>
+      <% } %>
+    </article>
+
+    <%- include('../partials/sidebar') %>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>
+</body>
+</html>

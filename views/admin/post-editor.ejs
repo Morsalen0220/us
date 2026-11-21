@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+  <title><%= post.id ? 'Edit Article' : 'New Article' %> — TechHaven CMS</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+<div class="admin-shell">
+  <%- include('./sidebar') %>
+
+  <main class="admin-main">
+    <div class="admin-header">
+      <div>
+        <h1 style="display:flex;align-items:center;gap:0.55rem;flex-wrap:wrap;">
+          <span><%= post.id ? 'Edit Article' : 'Create New Article' %></span>
+          <span class="badge <%= post.status === 'published' ? 'badge-pub' : 'badge-draft' %>"><%= post.status === 'published' ? 'Published' : (post.status === 'scheduled' ? 'Scheduled' : (post.status === 'in_review' ? 'In Review' : 'Draft')) %></span>
+        </h1>
+        <div style="font-size:0.86rem;color:#64748b;">
+          Auto-WebP conversion, Fact-Check metadata, Internal Link Suggestions &amp; Draft Autosave.
+          <span id="autosaveStatus" style="color:#2563eb;font-weight:700;margin-left:0.5rem;"></span>
+        </div>
+      </div>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+        <button type="submit" form="postEditorForm" name="submit_action" value="draft" formnovalidate class="btn btn-outline"><%- icon('file-edit', 15) %> Save Draft</button>
+        <button type="submit" form="postEditorForm" formaction="/admin/posts/preview" formtarget="_blank" formnovalidate class="btn btn-outline"><%- icon('eye', 15) %> Preview</button>
+        <% if (post.id && post.status === 'published') { %>
+        <a href="/article/<%= post.slug %>" target="_blank" class="btn btn-outline">View Live Article &rarr;</a>
+        <% } %>
+        <a href="/admin/posts" class="btn btn-outline">&larr; All Articles</a>
+      </div>
+    </div>
+
+    <% if (saved === 'draft') { %>
+    <div class="alert alert-success">Draft saved! This article is hidden from the public site. Click <strong>Preview</strong> to inspect it, resume editing anytime from All Articles &rarr; Drafts, or click <strong>Publish Article</strong> when ready.</div>
+    <% } else if (saved) { %>
+    <div class="alert alert-success">
+      <% if (post.status === 'published') { %>Article published! Live site, XML Sitemap, and RSS feed updated.<% } else if (post.status === 'scheduled') { %>Article scheduled! It will automatically publish at the chosen timestamp.<% } else if (post.status === 'in_review') { %>Article submitted for editorial review.<% } else { %>Article draft saved!<% } %>
+    </div>
+    <% } %>
+    <% if (error) { %>
+    <div class="alert alert-error"><%= error %></div>
+    <% } %>
+
+    <form id="postEditorForm" action="<%= post.id ? '/admin/posts/' + post.id : '/admin/posts' %>" method="POST" data-site-url="<%= siteUrl %>" data-post-id="<%= post.id || '' %>">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="preview_post_id" value="<%= post.id || '' %>">
+
+      <div class="editor-grid">
+        <div>
+          <!-- Core Story Content -->
+          <section class="card">
+            <div class="field">
+              <label for="postTitle">Article Headline (H1)</label>
+              <input id="postTitle" type="text" name="title" value="<%= post.title %>" required placeholder="e.g., GTA 6 PC Release Window &amp; AI Frame Tech: What US Players Need to Know">
+            </div>
+
+            <div class="field">
+              <label for="postSubtitle">Article Subtitle (Deck / Summary Line)</label>
+              <input id="postSubtitle" type="text" name="subtitle" value="<%= post.subtitle %>" placeholder="Compelling secondary headline shown directly below the H1...">
+            </div>
+
+            <div class="field">
+              <label for="postSlug">URL Slug (Clean SEO Permalink)</label>
+              <input id="postSlug" type="text" name="slug" value="<%= post.slug %>" placeholder="auto-generated-from-title">
+            </div>
+
+            <div class="field">
+              <label for="postExcerpt">Short Excerpt (Homepage &amp; Category Cards)</label>
+              <textarea id="postExcerpt" name="excerpt" rows="2" placeholder="1-2 crisp sentences summarizing the story..."><%= post.excerpt %></textarea>
+            </div>
+
+            <div class="field" style="margin-bottom:0;">
+              <label for="postContent">
+                <span>Article Body (Markdown or HTML supported)</span>
+                <button type="button" class="btn btn-outline btn-sm" data-open-media-modal="insert"><%- icon('image', 14) %> Insert WebP Image</button>
+              </label>
+              <div class="img-spec-hint">
+                <strong>In-Article Image Recommended:</strong> <code>1200 × 675 px</code> (16:9) or <code>1200 × 900 px</code> (4:3) — ideal width 800–1200 px (auto-converts to WebP ≤ 1400 px).
+              </div>
+              <div class="md-toolbar">
+                <button type="button" class="md-tool-btn" data-md-action="h2">H2</button>
+                <button type="button" class="md-tool-btn" data-md-action="h3">H3</button>
+                <button type="button" class="md-tool-btn" data-md-action="bold">Bold</button>
+                <button type="button" class="md-tool-btn" data-md-action="italic">Italic</button>
+                <button type="button" class="md-tool-btn" data-md-action="link">Link</button>
+                <button type="button" class="md-tool-btn" data-md-action="quote">Quote</button>
+                <button type="button" class="md-tool-btn" data-md-action="list">Bullets</button>
+                <button type="button" class="md-tool-btn" data-md-action="code">Code</button>
+                <button type="button" class="md-tool-btn" data-md-action="youtube"><%- icon('play', 12) %> YouTube / Short</button>
+                <button type="button" class="md-tool-btn" data-open-media-modal="insert">Upload/Pick WebP Image</button>
+              </div>
+              <textarea id="postContent" name="content_md" class="md-textarea" placeholder="Write your US/Europe tech report, GTA update, or step-by-step tutorial using Markdown..."><%= post.content_md %></textarea>
+            </div>
+          </section>
+
+          <!-- Article 2.0 Journalism & Verification Metadata -->
+          <section class="card">
+            <h2 style="margin:0 0 0.9rem;font-size:1.1rem;"><%- icon('newspaper', 18) %> Verification, Key Takeaways, Official Sources &amp; Corrections</h2>
+
+            <div class="field">
+              <label for="keyTakeaways">Key Takeaways (one bullet point per line — 3 to 5 points)</label>
+              <textarea id="keyTakeaways" name="key_takeaways_text" rows="4" placeholder="Point 1&#10;Point 2&#10;Point 3"><%= post.key_takeaways_text || '' %></textarea>
+            </div>
+
+            <div class="field">
+              <label for="whatsNew">What's New / Latest Update Callout (Optional)</label>
+              <input id="whatsNew" type="text" name="whats_new" value="<%= post.whats_new || '' %>" placeholder="e.g., Updated Nov 2026 with official Rockstar patch verification.">
+            </div>
+
+            <div class="admin-grid-2">
+              <div class="field">
+                <label for="factCheckStatus">Editorial Review Label</label>
+                <select id="factCheckStatus" name="fact_check_status">
+                  <option value="Editorial Review" <%= post.fact_check_status === 'Editorial Review' ? 'selected' : '' %>>Editorial Review</option>
+                  <option value="Fact-Checked" <%= post.fact_check_status === 'Fact-Checked' ? 'selected' : '' %>>Fact-Checked</option>
+                  <option value="Research & Analysis" <%= post.fact_check_status === 'Research & Analysis' ? 'selected' : '' %>>Research &amp; Analysis</option>
+                  <option value="Developing Story" <%= post.fact_check_status === 'Developing Story' ? 'selected' : '' %>>Developing Story</option>
+                  <option value="" <%= !post.fact_check_status ? 'selected' : '' %>>None (Hide Badge)</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="lastFactChecked">Last Fact-Checked Date</label>
+                <input id="lastFactChecked" type="text" name="last_fact_checked" value="<%= post.last_fact_checked || '' %>" placeholder="YYYY-MM-DD">
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="officialSources">Official Sources (one per line: <code>Label | https://url</code>)</label>
+              <textarea id="officialSources" name="official_sources_text" rows="3" placeholder="Rockstar Newswire | https://www.rockstargames.com/newswire"><%= post.official_sources_text || '' %></textarea>
+            </div>
+
+            <div class="field" style="margin-bottom:0;">
+              <label for="correctionsLog">Correction History (one per line: <code>YYYY-MM-DD | Note</code>)</label>
+              <textarea id="correctionsLog" name="corrections_text" rows="2" placeholder="2026-11-18 | Clarified benchmark driver version"><%= post.corrections_text || '' %></textarea>
+            </div>
+          </section>
+
+          <!-- YouTube / Shorts Video Review Metadata -->
+          <section class="card">
+            <h2 style="margin:0 0 0.9rem;font-size:1.1rem;"><%- icon('clapperboard', 18) %> YouTube / Shorts Video Review &amp; VideoObject Schema</h2>
+
+            <div class="field">
+              <label for="videoUrl">YouTube Watch, Embed, or Shorts URL (Optional)</label>
+              <input id="videoUrl" type="text" inputmode="url" name="video_url" value="<%= post.video_url || '' %>" placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/... or https://www.youtube.com/shorts/...">
+              <div id="videoUrlHint" style="font-size:0.76rem;margin-top:0.35rem;color:#64748b;">Supports youtube.com/watch?v=..., youtu.be/..., /shorts/..., or /embed/...</div>
+            </div>
+
+            <div class="admin-split-2">
+              <div class="field">
+                <label for="videoTitle">Video Review Title (Optional — defaults to Article Title)</label>
+                <input id="videoTitle" type="text" name="video_title" value="<%= post.video_title || '' %>" placeholder="e.g., RTX 50 Series Benchmarks Tested in 4K">
+              </div>
+              <div class="field">
+                <label for="videoDuration">Duration (ISO or mm:ss)</label>
+                <input id="videoDuration" type="text" name="video_duration" value="<%= post.video_duration || '' %>" placeholder="PT8M42S or 8:42">
+              </div>
+            </div>
+
+            <label style="display:flex;justify-content:flex-start;align-items:center;gap:0.5rem;font-weight:600;cursor:pointer;">
+              <input type="checkbox" name="video_is_short" value="1" <%= post.video_is_short ? 'checked' : '' %>>
+              <%- icon('smartphone', 16) %> Vertical 9:16 YouTube Short (also listed in Shorts tab at /videos)
+            </label>
+          </section>
+
+          <!-- Complete SEO Optimization Panel -->
+          <section class="card">
+            <h2 style="margin:0 0 0.9rem;font-size:1.1rem;"><%- icon('search', 18) %> Google Search SEO &amp; Meta Controls</h2>
+
+            <div class="serp-box">
+              <div style="font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:0.35rem;">Live Google Search SERP Preview</div>
+              <div id="serpUrl" class="serp-url"><%= siteUrl %>/article/<%= post.slug || 'article-slug' %></div>
+              <div id="serpTitle" class="serp-title"><%= post.meta_title || post.title || 'Headline Preview' %></div>
+              <div id="serpDesc" class="serp-desc"><%= post.meta_description || post.excerpt || 'Meta description preview...' %></div>
+            </div>
+
+            <div class="field">
+              <label for="focusKeyword">Focus Keyword (Primary Ranking Term)</label>
+              <input id="focusKeyword" type="text" name="focus_keyword" value="<%= post.focus_keyword %>" placeholder="e.g., GTA 6 PC release, AI agents, Core Web Vitals">
+            </div>
+
+            <div class="field">
+              <label for="metaTitle">
+                <span>Meta Title (Google Title Tag)</span>
+                <span id="metaTitleCount" class="char-counter">0 chars</span>
+              </label>
+              <input id="metaTitle" type="text" name="meta_title" value="<%= post.meta_title %>" placeholder="Ideal 50–60 characters with primary US/EU keyword">
+            </div>
+
+            <div class="field">
+              <label for="metaSubtitle">
+                <span>Meta Subtitle (Schema alternativeHeadline &amp; Subtitle Meta)</span>
+                <span id="metaSubtitleCount" class="char-counter">0 chars</span>
+              </label>
+              <input id="metaSubtitle" type="text" name="meta_subtitle" value="<%= post.meta_subtitle %>" placeholder="Secondary SEO headline for NewsArticle JSON-LD &amp; Discover">
+            </div>
+
+            <div class="field">
+              <label for="metaDesc">
+                <span>Meta Description</span>
+                <span id="metaDescCount" class="char-counter">0 chars</span>
+              </label>
+              <textarea id="metaDesc" name="meta_description" rows="3" placeholder="Ideal 135–160 characters summarizing value for US &amp; European searchers..."><%= post.meta_description %></textarea>
+            </div>
+
+            <div class="field">
+              <label for="metaTags">Meta Tags / Keywords (comma-separated — auto-creates /tag/ pages)</label>
+              <input id="metaTags" type="text" name="meta_tags" value="<%= post.meta_tags %>" placeholder="GTA 5, GTA 6, AI Updates, US Tech, Europe Tech, Tutorial">
+            </div>
+
+            <div class="admin-grid-2">
+              <div class="field">
+                <label for="canonicalUrl">Canonical URL (Optional Override)</label>
+                <input id="canonicalUrl" type="url" name="canonical_url" value="<%= post.canonical_url %>" placeholder="Leave blank for auto canonical">
+              </div>
+              <div class="field">
+                <label for="robotsDirective">Robots Directive</label>
+                <select id="robotsDirective" name="robots">
+                  <option value="index, follow" <%= post.robots === 'index, follow' ? 'selected' : '' %>>index, follow (Recommended)</option>
+                  <option value="noindex, follow" <%= post.robots === 'noindex, follow' ? 'selected' : '' %>>noindex, follow</option>
+                  <option value="noindex, nofollow" <%= post.robots === 'noindex, nofollow' ? 'selected' : '' %>>noindex, nofollow</option>
+                </select>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Right Sidebar Controls -->
+        <div>
+          <section class="card">
+            <h2 style="margin:0 0 0.85rem;font-size:1.02rem;">Publish &amp; Editorial Workflow</h2>
+
+            <div class="field">
+              <label for="postStatus">Status</label>
+              <select id="postStatus" name="status">
+                <% if (!currentUser || currentUser.role !== 'author') { %>
+                <option value="published" <%= post.status === 'published' ? 'selected' : '' %>>Published (Live + Indexed)</option>
+                <option value="scheduled" <%= post.status === 'scheduled' ? 'selected' : '' %>>Scheduled (Auto-Publish at Timestamp)</option>
+                <% } %>
+                <option value="in_review" <%= post.status === 'in_review' ? 'selected' : '' %>>In Review (Needs Editor Approval)</option>
+                <option value="draft" <%= post.status === 'draft' ? 'selected' : '' %>>Draft (Hidden)</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="postCategory">Category Desk</label>
+              <select id="postCategory" name="category_id">
+                <% categories.forEach(function(cat) { %>
+                <option value="<%= cat.id %>" <%= String(post.category_id) === String(cat.id) ? 'selected' : '' %>><%= cat.name %></option>
+                <% }) %>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="postRegion">Location / Region Tag</label>
+              <select id="postRegion" name="region">
+                <% ['USA & Europe', 'USA', 'Europe', 'Global'].forEach(function(reg) { %>
+                <option value="<%= reg %>" <%= post.region === reg ? 'selected' : '' %>><%= reg %></option>
+                <% }) %>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="postAuthor">Assigned Author</label>
+              <select id="postAuthor" name="author_id">
+                <% authors.forEach(function(a) { %>
+                <option value="<%= a.id %>" <%= String(post.author_id) === String(a.id) ? 'selected' : '' %>><%= a.name %> (<%= a.role %>)</option>
+                <% }) %>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="publishedAt">Publish / Schedule Timestamp (UTC)</label>
+              <input id="publishedAt" type="datetime-local" name="published_at" value="<%= post.published_at %>">
+            </div>
+
+            <div class="field" style="display:flex;flex-direction:column;gap:0.45rem;">
+              <label style="justify-content:flex-start;gap:0.5rem;font-weight:600;cursor:pointer;">
+                <input type="checkbox" name="is_breaking" value="1" <%= post.is_breaking ? 'checked' : '' %>>
+                <%- icon('radio', 15) %> Pin to Breaking News Bar
+              </label>
+              <label style="justify-content:flex-start;gap:0.5rem;font-weight:600;cursor:pointer;">
+                <input type="checkbox" name="is_featured" value="1" <%= post.is_featured ? 'checked' : '' %>>
+                Feature in Homepage Hero
+              </label>
+              <label style="justify-content:flex-start;gap:0.5rem;font-weight:600;cursor:pointer;">
+                <input type="checkbox" name="is_editors_pick" value="1" <%= post.is_editors_pick ? 'checked' : '' %>>
+                <%- icon('star', 15) %> Mark as Editor’s Pick
+              </label>
+              <label style="justify-content:flex-start;gap:0.5rem;font-weight:600;cursor:pointer;">
+                <input type="checkbox" name="is_trending" value="1" <%= post.is_trending ? 'checked' : '' %>>
+                Pin to Trending Now
+              </label>
+              <label style="justify-content:flex-start;gap:0.5rem;font-weight:600;cursor:pointer;">
+                <input type="checkbox" name="queue_social" value="1">
+                <%- icon('megaphone', 15) %> Auto-Generate Social Queue (X, Bluesky, Reddit, LinkedIn, HN)
+              </label>
+              <label style="justify-content:flex-start;gap:0.5rem;font-weight:600;cursor:pointer;">
+                <input type="checkbox" name="send_push" value="1">
+                <%- icon('bell', 15) %> Broadcast Breaking Web Push Alert on Publish
+              </label>
+            </div>
+
+            <div class="editor-action-row">
+              <button type="submit" name="submit_action" value="draft" formnovalidate class="btn btn-outline" style="width:100%;">
+                <%- icon('file-edit', 15) %> Save Draft
+              </button>
+              <button type="submit" formaction="/admin/posts/preview" formtarget="_blank" formnovalidate class="btn btn-outline" style="width:100%;">
+                <%- icon('eye', 15) %> Preview
+              </button>
+            </div>
+            <% if (!post.id || post.status === 'draft' || post.status === 'in_review') { %>
+            <button type="submit" id="primaryPublishBtn" name="submit_action" value="publish" class="btn btn-primary" style="width:100%;padding:0.72rem;font-size:0.95rem;">
+              <%- icon('send', 15) %> <%= (currentUser && currentUser.role === 'author') ? 'Submit for Review' : 'Publish Article' %>
+            </button>
+            <% } else { %>
+            <button type="submit" id="primaryPublishBtn" name="submit_action" value="save" class="btn btn-primary" style="width:100%;padding:0.72rem;font-size:0.95rem;">
+              <%- icon('check', 15) %> Update &amp; Save Changes
+            </button>
+            <% } %>
+          </section>
+
+          <!-- Internal Link Suggestions -->
+          <section class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+              <h2 style="margin:0;font-size:1.02rem;"><%- icon('link', 16) %> Internal Link Suggestions</h2>
+              <button type="button" id="fetchInternalLinksBtn" class="btn btn-outline btn-sm">Suggest</button>
+            </div>
+            <div id="internalLinkSuggestions" style="font-size:0.8rem;color:#64748b;">Click Suggest to insert related TechHaven US articles.</div>
+          </section>
+
+          <!-- Live SEO Score Card -->
+          <section class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <h2 style="margin:0;font-size:1.02rem;">Live SEO Score</h2>
+              <strong id="seoScoreLabel" style="font-size:1.1rem;color:#2563eb;">0/100</strong>
+            </div>
+            <div class="seo-meter-bar">
+              <div id="seoMeterFill" class="seo-meter-fill"></div>
+            </div>
+            <ul id="seoChecklist" class="seo-checks"></ul>
+          </section>
+
+          <!-- Featured Image Auto-WebP Uploader + Title / Alt / Caption -->
+          <section class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.7rem;">
+              <h2 style="margin:0;font-size:1.02rem;"><%- icon('image', 16) %> Featured Image (Auto-WebP)</h2>
+              <button type="button" class="btn btn-outline btn-sm" data-open-media-modal="featured">Pick Library</button>
+            </div>
+
+            <div class="img-spec-hint">
+              <strong>Featured / Hero Cover Recommended:</strong> <code>1400 × 788 px</code> (16:9) — Minimum <code>1200 × 675 px</code> for Google Discover. Auto-generates <code>640 × 360 px</code> card thumbnail.
+            </div>
+
+            <div id="featuredDropzone" class="dropzone" style="margin-bottom:0.75rem;">
+              <input id="featuredFileInput" type="file" accept="image/*" style="display:none;">
+              <div style="font-weight:700;font-size:0.88rem;">Drop PNG / JPG / GIF / WebP here or click</div>
+              <div style="font-size:0.76rem;color:#64748b;">Recommended 1400 × 788 px (16:9) • Auto-converts to WebP + 640×360 thumb</div>
+            </div>
+
+            <div id="featuredUploadStatus" style="font-size:0.8rem;margin-bottom:0.75rem;color:#1e293b;"></div>
+
+            <div id="featuredPreviewWrap" style="display:<%= post.featured_image ? 'block' : 'none' %>;margin-bottom:0.8rem;">
+              <img id="featuredPreviewImg" src="<%= post.featured_image %>" alt="" style="width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px;border:1px solid #e2e8f0;">
+            </div>
+
+            <input id="featuredImage" type="hidden" name="featured_image" value="<%= post.featured_image %>">
+            <input id="featuredImageThumb" type="hidden" name="featured_image_thumb" value="<%= post.featured_image_thumb %>">
+            <input id="featuredImageWidth" type="hidden" name="featured_image_width" value="<%= post.featured_image_width %>">
+            <input id="featuredImageHeight" type="hidden" name="featured_image_height" value="<%= post.featured_image_height %>">
+
+            <div class="field">
+              <label for="featuredImageTitle">Image Title (HTML title &amp; Image Sitemap)</label>
+              <input id="featuredImageTitle" type="text" name="featured_image_title" value="<%= post.featured_image_title %>" placeholder="Descriptive image title for Google Images">
+            </div>
+
+            <div class="field">
+              <label for="featuredImageAlt">Image Alt Text (Accessibility &amp; SEO)</label>
+              <input id="featuredImageAlt" type="text" name="featured_image_alt" value="<%= post.featured_image_alt %>" placeholder="What the image depicts...">
+            </div>
+
+            <div class="field">
+              <label for="featuredImageCaption">Image Caption (&lt;figcaption&gt; &amp; Schema)</label>
+              <textarea id="featuredImageCaption" name="featured_image_caption" rows="2" placeholder="Visible caption + credit below the hero image..."><%= post.featured_image_caption %></textarea>
+            </div>
+
+            <div class="field" style="margin-bottom:0;">
+              <label for="featuredImageDescription">Image Description (SEO ImageObject &amp; Accessibility)</label>
+              <textarea id="featuredImageDescription" name="featured_image_description" rows="2" placeholder="Detailed image description for Google Images &amp; Schema..."><%= post.featured_image_description || '' %></textarea>
+            </div>
+          </section>
+
+          <% if (Array.isArray(revisions) && revisions.length > 0) { %>
+          <section class="card">
+            <h2 style="margin:0 0 0.65rem;font-size:1.02rem;"><%- icon('clock', 16) %> Revision History (<%= revisions.length %>)</h2>
+            <div style="display:flex;flex-direction:column;gap:0.5rem;font-size:0.8rem;">
+              <% revisions.forEach(function(rev) { %>
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;padding-bottom:0.4rem;border-bottom:1px solid #e2e8f0;">
+                <div>
+                  <div style="font-weight:700;"><%= formatDateTime(rev.created_at) %></div>
+                  <div style="color:#64748b;">By <%= rev.editor_name || 'Editor' %></div>
+                </div>
+                <button type="submit" formaction="/admin/posts/<%= post.id %>/restore/<%= rev.id %>" class="btn btn-outline btn-sm" onclick="return confirm('Restore this earlier version?');">Restore</button>
+              </div>
+              <% }) %>
+            </div>
+          </section>
+          <% } %>
+        </div>
+      </div>
+    </form>
+  </main>
+</div>
+
+<!-- Media Picker Modal -->
+<div id="mediaModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-label="WebP Media Library">
+  <div class="modal-panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <h2 style="margin:0;font-size:1.15rem;">WebP Media Library &amp; Instant Converter</h2>
+      <button type="button" id="closeMediaModal" class="btn btn-outline btn-sm"><%- icon('x', 15) %> Close</button>
+    </div>
+
+    <div id="mediaModalSizeHint" class="img-spec-hint" style="margin-bottom:0.75rem;"></div>
+
+    <div class="card" style="background:#f8fafc;">
+      <div style="font-weight:700;font-size:0.88rem;margin-bottom:0.55rem;">Upload Any Image Format &rarr; Auto-Convert to WebP</div>
+      <div class="admin-grid-2" style="gap:0.5rem;margin-bottom:0.65rem;">
+        <input id="modalImgTitle" type="text" placeholder="Image Title" style="padding:0.45rem;border:1px solid #cbd5e1;border-radius:6px;">
+        <input id="modalImgAlt" type="text" placeholder="Alt Text" style="padding:0.45rem;border:1px solid #cbd5e1;border-radius:6px;">
+        <input id="modalImgCaption" type="text" placeholder="Caption" style="padding:0.45rem;border:1px solid #cbd5e1;border-radius:6px;">
+        <input id="modalImgDesc" type="text" placeholder="Image Description (SEO)" style="padding:0.45rem;border:1px solid #cbd5e1;border-radius:6px;">
+      </div>
+      <input id="modalUploadInput" type="file" accept="image/*">
+    </div>
+
+    <div id="mediaModalGrid" class="media-grid"></div>
+  </div>
+</div>
+
+<script src="/js/admin.js"></script>
+</body>
+</html>

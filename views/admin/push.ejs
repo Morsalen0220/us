@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+  <title>Web Push Breaking Alerts — TechHaven CMS</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+<div class="admin-shell">
+  <%- include('./sidebar') %>
+
+  <main class="admin-main">
+    <div class="admin-header">
+      <div><h1><%- icon('bell', 24) %> Web Push Breaking News Console</h1></div>
+      <a href="/admin/settings" class="btn btn-outline">VAPID Contact Settings</a>
+    </div>
+
+    <% if (flash) { %><div class="alert alert-success"><%= flash %></div><% } %>
+
+    <div class="admin-grid-3" style="gap:1rem;margin-bottom:1.25rem;">
+      <div class="card" style="margin:0;">
+        <div style="font-size:0.78rem;color:#64748b;font-weight:700;text-transform:uppercase;">Active Subscribers</div>
+        <div style="font-size:1.9rem;font-weight:800;margin-top:0.2rem;"><%= subscriberCount %></div>
+      </div>
+      <div class="card" style="margin:0;">
+        <div style="font-size:0.78rem;color:#64748b;font-weight:700;text-transform:uppercase;">Campaigns Sent</div>
+        <div style="font-size:1.9rem;font-weight:800;margin-top:0.2rem;"><%= campaigns.length %></div>
+      </div>
+      <div class="card" style="margin:0;">
+        <div style="font-size:0.78rem;color:#64748b;font-weight:700;text-transform:uppercase;">VAPID Status</div>
+        <div style="font-size:0.9rem;font-weight:700;margin-top:0.35rem;word-break:break-all;">Active (<code><%= subject %></code>)</div>
+      </div>
+    </div>
+
+    <div class="admin-split-side">
+      <section class="card">
+        <h2 style="margin:0 0 0.85rem;font-size:1.05rem;">Send Breaking News Broadcast</h2>
+        <form action="/admin/push/send" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="field">
+            <label for="pushQuickPost">Prefill from Recent Story (Optional)</label>
+            <select id="pushQuickPost" onchange="if(this.value){const o=this.options[this.selectedIndex];document.getElementById('pushTitle').value='BREAKING: '+o.dataset.title;document.getElementById('pushBody').value=o.dataset.excerpt||'Breaking report live on TechHaven US.';document.getElementById('pushUrl').value='/article/'+o.value;}">
+              <option value="">-- Choose recent published story --</option>
+              <% recentPosts.forEach(function(rp) { %>
+              <option value="<%= rp.slug %>" data-title="<%= rp.title %>" data-excerpt="<%= rp.excerpt %>"><%= rp.title %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="field">
+            <label for="pushTitle">Notification Title</label>
+            <input id="pushTitle" type="text" name="title" required placeholder="BREAKING: GPT-5 / GTA 6 Update">
+          </div>
+          <div class="field">
+            <label for="pushBody">Message Body (1-2 crisp lines)</label>
+            <textarea id="pushBody" name="body" rows="3" required placeholder="Concise summary for desktop & Android Web Push notification..."></textarea>
+          </div>
+          <div class="field">
+            <label for="pushUrl">Target Relative Path or URL</label>
+            <input id="pushUrl" type="text" name="url" value="/" placeholder="/article/your-breaking-story">
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;"><%- icon('send', 16) %> Broadcast Web Push Alert</button>
+        </form>
+        <p style="font-size:0.78rem;color:#64748b;margin:0.75rem 0 0;word-break:break-all;">
+          <strong>VAPID Public Key:</strong> <%= publicKey %>
+        </p>
+      </section>
+
+      <section class="card">
+        <h2 style="margin:0 0 0.85rem;font-size:1.05rem;">Broadcast History</h2>
+        <% if (!campaigns.length) { %>
+          <p style="color:#64748b;">No Web Push broadcasts sent yet.</p>
+        <% } else { %>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Headline &amp; Message</th>
+                  <th>Target</th>
+                  <th>Delivered</th>
+                  <th>Sent At</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% campaigns.forEach(function(c) { %>
+                <tr>
+                  <td>
+                    <strong><%= c.title %></strong>
+                    <div style="font-size:0.8rem;color:#64748b;"><%= c.body %></div>
+                  </td>
+                  <td><a href="<%= c.url %>" target="_blank"><%= c.url %></a></td>
+                  <td>
+                    <span class="badge badge-success"><%= c.sent_count %> sent</span>
+                    <% if (c.failed_count > 0) { %><span class="badge"><%= c.failed_count %> expired/failed</span><% } %>
+                  </td>
+                  <td style="font-size:0.8rem;color:#64748b;"><%= formatDateTime(c.created_at) %></td>
+                </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </section>
+    </div>
+  </main>
+</div>
+</body>
+</html>

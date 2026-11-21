@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<%- include('../partials/head') %>
+<body>
+<%- include('../partials/header') %>
+
+<main class="main-content container">
+  <header style="margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:2px solid var(--border);">
+    <span class="cat-pill" style="--cat-color:#2563EB">AI Tools Directory</span>
+    <h1 style="margin:0.45rem 0 0.35rem;font-size:2rem;font-weight:850;display:flex;align-items:center;gap:0.5rem;"><%- icon('wrench', 26) %> Tested AI Tools Directory</h1>
+    <p style="margin:0 0 1rem;color:var(--text-muted);">Compare verified AI assistants, coding editors, search engines, and creative platforms by pricing, pros, and cons.</p>
+
+    <form method="GET" action="/ai-tools" class="tools-filter-form">
+      <input type="search" name="q" value="<%= filters.q %>" class="search-input" style="max-width:260px;padding:0.5rem 0.8rem;" placeholder="Search AI tool...">
+      <select name="category" style="padding:0.5rem 0.8rem;border-radius:9px;border:1px solid var(--border);background:var(--surface);color:var(--text);">
+        <option value="all">All Categories</option>
+        <% categoriesList.forEach(function(c) { %>
+        <option value="<%= c %>" <%= filters.category === c ? 'selected' : '' %>><%= c %></option>
+        <% }) %>
+      </select>
+      <select name="pricing" style="padding:0.5rem 0.8rem;border-radius:9px;border:1px solid var(--border);background:var(--surface);color:var(--text);">
+        <option value="all">Any Pricing</option>
+        <option value="Freemium" <%= filters.pricing === 'Freemium' ? 'selected' : '' %>>Freemium</option>
+        <option value="Free" <%= filters.pricing === 'Free' ? 'selected' : '' %>>Free</option>
+        <option value="Paid" <%= filters.pricing === 'Paid' ? 'selected' : '' %>>Paid</option>
+      </select>
+      <button type="submit" class="btn-primary">Filter Tools</button>
+    </form>
+  </header>
+
+  <div class="tools-grid">
+    <% tools.forEach(function(t) { %>
+    <article class="tool-card">
+      <div style="display:flex;align-items:center;gap:0.75rem;">
+        <% if (t.image_url) { %>
+        <img src="<%= assetUrl(t.image_url) %>" alt="<%= t.name %>" class="tool-logo" style="object-fit:cover;padding:0;">
+        <% } else { %>
+        <div class="tool-logo" style="background:<%= t.logo_color %>"><%= t.name.slice(0, 1) %></div>
+        <% } %>
+        <div>
+          <h2 style="margin:0;font-size:1.1rem;"><a href="/ai-tools/<%= t.slug %>"><%= t.name %></a></h2>
+          <div style="font-size:0.8rem;color:var(--text-soft);display:inline-flex;align-items:center;gap:0.25rem;"><%= t.category %> • <%- icon('star', 13) %> <%= t.rating %>/5</div>
+        </div>
+      </div>
+      <p style="margin:0;font-size:0.9rem;color:var(--text-muted);flex:1;"><%= t.tagline %></p>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:0.5rem;border-top:1px solid var(--border);">
+        <span style="font-size:0.78rem;font-weight:700;padding:0.2rem 0.55rem;border-radius:6px;background:var(--surface-alt);border:1px solid var(--border);color:var(--text-muted);"><%= t.price_label %></span>
+        <a href="/ai-tools/<%= t.slug %>" style="color:var(--accent);font-weight:700;font-size:0.86rem;">Full Review &rarr;</a>
+      </div>
+    </article>
+    <% }) %>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "name": "techhaven-us",
+  "version": "1.0.0",
+  "description": "TechHaven US - High-speed US & Europe tech news, AI updates, gaming (GTA 5/6), and tutorials CMS built with Node.js, Express, EJS, SQLite, and automatic WebP conversion.",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "seed": "node src/db/seed.js"
+  },
+  "dependencies": {
+    "compression": "^1.8.2",
+    "ejs": "^3.1.10",
+    "express": "^5.3.0",
+    "helmet": "^8.3.0",
+    "marked": "^18.2.1",
+    "multer": "^2.5.0",
+    "sanitize-html": "^2.18.2",
+    "sharp": "^0.35.5",
+    "web-push": "^4.0.0"
+  }
+}

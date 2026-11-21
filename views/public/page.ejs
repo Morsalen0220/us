@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<%- include('../partials/head') %>
+<body>
+<%- include('../partials/header') %>
+
+<main class="main-content container">
+  <article class="page-card article-prose">
+    <h1 style="margin-top:0;"><%= pageTitle %></h1>
+    <p style="font-size:1.1rem;color:var(--text-muted);"><%= pageSubtitle %></p>
+    <hr style="border:none;border-top:1px solid var(--border);margin:1.5rem 0;">
+
+    <% if (pageKey === 'about') { %>
+    <p><strong><%= settings.site_name || 'TechHaven US' %></strong> (<code><%= siteUrl %></code>) is an independent digital technology publication focused on North American and European software engineering, artificial intelligence, gaming ecosystems (including Rockstar’s GTA 5 and GTA 6), hardware benchmarks, and high-speed web tutorials.</p>
+    <h2>Our Editorial Mission</h2>
+    <ul>
+      <li><strong>Actionable Depth Over Clickbait:</strong> Every article explains what happened, why it matters in the US and Europe, and what practical steps readers can take.</li>
+      <li><strong>Benchmark Integrity:</strong> Hardware tests and Core Web Vitals optimization guides are verified directly in-house.</li>
+      <li><strong>Speed-First Reader Experience:</strong> Built on lightweight server-side rendering and 100% WebP imagery so pages load instantly on desktop and mobile.</li>
+    </ul>
+    <h2 id="ownership">Ownership, Publisher Imprint &amp; Mailing Address</h2>
+    <div style="background:var(--surface-alt);border:1px solid var(--border);border-radius:12px;padding:1rem 1.2rem;font-size:0.94rem;">
+      <p style="margin:0 0 0.45rem;"><strong>Publisher / Legal Entity:</strong> <%= settings.publisher_legal_name || 'TechHaven US Media LLC' %></p>
+      <p style="margin:0 0 0.45rem;"><strong>Owner &amp; Managing Editor:</strong> <%= settings.publisher_owner_name || 'Alex Mercer' %></p>
+      <p style="margin:0 0 0.45rem;"><strong>Location:</strong> <%= [settings.publisher_street_address, settings.publisher_city || 'New York', [settings.publisher_state || 'NY', settings.publisher_postal_code].filter(Boolean).join(' '), settings.publisher_country || 'United States'].filter(Boolean).join(', ') %></p>
+      <% if (settings.publisher_phone) { %><p style="margin:0 0 0.45rem;"><strong>Phone:</strong> <%= settings.publisher_phone %></p><% } %>
+      <p style="margin:0;"><strong>Contact:</strong> <a href="mailto:<%= settings.contact_email || 'contact@techhavenus.com' %>"><%= settings.contact_email || 'contact@techhavenus.com' %></a> • <strong>Editorial Desk:</strong> <a href="mailto:editorial@techhavenus.com">editorial@techhavenus.com</a> • <strong>Privacy &amp; GDPR:</strong> <a href="mailto:<%= settings.privacy_email || 'privacy@techhavenus.com' %>"><%= settings.privacy_email || 'privacy@techhavenus.com' %></a></p>
+    </div>
+    <% if (authors && authors.length > 0) { %>
+    <h2>Editorial Team</h2>
+    <% authors.forEach(function(a) { %>
+    <div class="author-box">
+      <div class="author-avatar"><%= a.name.slice(0, 1).toUpperCase() %></div>
+      <div>
+        <h3 style="margin:0 0 0.25rem;"><a href="/author/<%= a.slug %>"><%= a.name %></a><% if (a.job_title) { %> <span style="font-size:0.85rem;color:var(--text-soft);">— <%= a.job_title %></span><% } %></h3>
+        <p style="margin:0;"><%= a.bio %></p>
+      </div>
+    </div>
+    <% }) %>
+    <% } %>
+
+    <% } else if (pageKey === 'editorial') { %>
+    <p>At <strong><%= settings.site_name || 'TechHaven US' %></strong>, accuracy and reader trust come before speed-to-publish. Every news report, tutorial, and review undergoes verification prior to publication.</p>
+    <h2>Source Verification &amp; Corrections</h2>
+    <ul>
+      <li>Primary announcements from technology companies, regulators (US FTC/FCC, European Commission), and game studios are linked and cross-checked.</li>
+      <li>If a factual error occurs, we update the article promptly and display an updated publication timestamp.</li>
+      <li>Report corrections anytime via <a href="/contact">our contact desk</a> or email <a href="mailto:<%= settings.contact_email || 'contact@techhavenus.com' %>"><%= settings.contact_email || 'contact@techhavenus.com' %></a>.</li>
+    </ul>
+
+    <% } else if (pageKey === 'privacy') { %>
+    <p>This Privacy Policy explains how <strong><%= settings.site_name || 'TechHaven US' %></strong> (<code><%= siteUrl %></code>) collects, uses, and safeguards information for visitors across the United States (including California under CCPA/CPRA), the United Kingdom, and the European Economic Area (GDPR).</p>
+    <h2>1. Information We Collect</h2>
+    <ul>
+      <li><strong>Information You Voluntarily Provide:</strong> Email addresses submitted to our newsletter and messages sent via our contact form.</li>
+      <li><strong>Essential &amp; Analytics Storage:</strong> Theme preferences (stored locally in your browser) and privacy-respecting analytics when consented.</li>
+    </ul>
+    <h2>2. Google AdSense &amp; Third-Party Advertising Cookies</h2>
+    <p>We partner with <strong>Google AdSense</strong> to fund independent journalism. Third-party vendors, including Google, use cookies (such as the DoubleClick cookie) to serve ads based on a user’s prior visits to this website or other websites on the internet.</p>
+    <ul>
+      <li>Users in the EEA, UK, and US can customize or opt out of personalized advertising by visiting <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer">Google Ads Settings</a> or <a href="https://www.aboutads.info/choices/" target="_blank" rel="noopener noreferrer">YourAdChoices</a>.</li>
+      <li>Essential-only consent disables ad personalization signals via Google Consent Mode v2.</li>
+    </ul>
+    <h2>3. Your GDPR &amp; CCPA Rights</h2>
+    <p>You may request access to, correction of, or deletion of any personal email data you submitted to us by contacting <a href="mailto:<%= settings.contact_email || 'contact@techhavenus.com' %>"><%= settings.contact_email || 'contact@techhavenus.com' %></a>.</p>
+
+    <% } else if (pageKey === 'terms') { %>
+    <p>By accessing <strong><%= settings.site_name || 'TechHaven US' %></strong> (<code><%= siteUrl %></code>), you agree to abide by these Terms of Service and applicable US and European laws.</p>
+    <h2>Intellectual Property</h2>
+    <p>Original articles, benchmarks, tutorials, and custom editorial graphics published on TechHaven US remain our intellectual property. Short quoted excerpts are permitted with clear attribution and a canonical link back to the original article.</p>
+    <h2>Acceptable Use</h2>
+    <p>Automated scraping that disrupts site availability, unauthorized access attempts against administrative endpoints, and spam submissions are strictly prohibited.</p>
+
+    <% } else if (pageKey === 'disclaimer') { %>
+    <p>Content published on <strong><%= settings.site_name || 'TechHaven US' %></strong> is provided for informational and educational purposes.</p>
+    <h2>Trademarks &amp; Game Coverage</h2>
+    <p>Product names, logos, and trademarks—including Grand Theft Auto / GTA 5 / GTA 6 (Rockstar Games / Take-Two Interactive), NVIDIA, AMD, OpenAI, and Google—belong to their respective owners and are referenced strictly for editorial news and review purposes.</p>
+    <h2>Advertising Disclosure</h2>
+    <p>Display advertisements served through Google AdSense are clearly labeled as <em>Advertisement</em> and do not influence our editorial reviews or rankings.</p>
+    <% } %>
+  </article>
+</main>
+
+<%- include('../partials/footer') %>
+</body>
+</html>

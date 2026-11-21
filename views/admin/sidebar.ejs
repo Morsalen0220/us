@@ -1,0 +1,82 @@
+<div class="admin-mobile-bar">
+  <a href="/admin" class="admin-brand">
+    <span class="admin-brand-dot">T</span>
+    <span>TechHaven CMS</span>
+  </a>
+  <button type="button" id="adminMenuBtn" class="btn btn-outline btn-sm admin-menu-btn" aria-controls="adminSidebar" aria-expanded="false" aria-label="Open Admin Menu"><%- icon('menu', 16) %> Menu</button>
+</div>
+<div id="adminDrawerBackdrop" class="admin-drawer-backdrop" aria-hidden="true"></div>
+<aside id="adminSidebar" class="admin-sidebar" aria-label="Admin Navigation">
+  <div class="admin-sidebar-head">
+    <a href="/admin" class="admin-brand">
+      <span class="admin-brand-dot">T</span>
+      <span>TechHaven CMS</span>
+    </a>
+    <button type="button" id="adminCloseBtn" class="btn btn-outline btn-sm admin-close-btn" aria-label="Close Admin Menu"><%- icon('x', 16) %></button>
+  </div>
+
+  <nav class="admin-nav">
+    <a href="/admin" class="admin-nav-link <%= adminPage === 'dashboard' ? 'active' : '' %>"><%- icon('layout-dashboard', 16) %> Dashboard</a>
+    <a href="/admin/posts/new" class="admin-nav-link <%= adminPage === 'new-post' ? 'active' : '' %>"><%- icon('pen-square', 16) %> New Article</a>
+    <a href="/admin/posts" class="admin-nav-link <%= adminPage === 'posts' ? 'active' : '' %>"><%- icon('newspaper', 16) %> All Articles</a>
+    <a href="/admin/calendar" class="admin-nav-link <%= adminPage === 'calendar' ? 'active' : '' %>"><%- icon('calendar', 16) %> Editorial Calendar</a>
+    <a href="/admin/media" class="admin-nav-link <%= adminPage === 'media' ? 'active' : '' %>"><%- icon('image', 16) %> WebP Media Library</a>
+    <a href="/admin/categories" class="admin-nav-link <%= adminPage === 'categories' ? 'active' : '' %>"><%- icon('folder-tree', 16) %> Categories (10)</a>
+    <a href="/admin/ai-tools" class="admin-nav-link <%= adminPage === 'ai-tools' ? 'active' : '' %>"><%- icon('wrench', 16) %> AI Tools Directory</a>
+    <a href="/admin/briefings" class="admin-nav-link <%= adminPage === 'briefings' ? 'active' : '' %>"><%- icon('zap', 16) %> Daily Briefings</a>
+    <a href="/admin/timelines" class="admin-nav-link <%= adminPage === 'timelines' ? 'active' : '' %>"><%- icon('clock', 16) %> News Timelines</a>
+    <a href="/admin/social" class="admin-nav-link <%= adminPage === 'social' ? 'active' : '' %>"><%- icon('megaphone', 16) %> Social Queue</a>
+    <a href="/admin/push" class="admin-nav-link <%= adminPage === 'push' ? 'active' : '' %>"><%- icon('bell', 16) %> Web Push Alerts</a>
+    <a href="/admin/seo-tools" class="admin-nav-link <%= adminPage === 'seo-tools' ? 'active' : '' %>"><%- icon('search', 16) %> SEO &amp; Redirects</a>
+    <a href="/admin/analytics" class="admin-nav-link <%= adminPage === 'analytics' ? 'active' : '' %>"><%- icon('trending-up', 16) %> Analytics</a>
+    <a href="/admin/inbox" class="admin-nav-link <%= adminPage === 'inbox' ? 'active' : '' %>"><%- icon('inbox', 16) %> Inbox &amp; Subscribers</a>
+    <% if (currentUser && currentUser.role === 'admin') { %>
+    <a href="/admin/users" class="admin-nav-link <%= adminPage === 'users' ? 'active' : '' %>"><%- icon('users', 16) %> Authors &amp; Roles</a>
+    <a href="/admin/system" class="admin-nav-link <%= adminPage === 'system' ? 'active' : '' %>"><%- icon('shield', 16) %> Backups &amp; Health</a>
+    <% } %>
+    <a href="/admin/settings" class="admin-nav-link <%= adminPage === 'settings' ? 'active' : '' %>"><%- icon('settings', 16) %> SEO, AdSense &amp; CDN</a>
+  </nav>
+
+  <div class="admin-sidebar-footer">
+    <a href="/" target="_blank" class="admin-nav-link" style="background:rgba(255,255,255,0.05);"><%- icon('globe', 16) %> View Live Site &rarr;</a>
+    <form action="/admin/logout" method="POST">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button type="submit" class="btn btn-outline btn-sm" style="width:100%;background:#1e293b;color:#cbd5e1;border-color:#334155;">Sign Out (<%= currentUser ? currentUser.name : '' %> • <%= currentUser ? currentUser.role : '' %>)</button>
+    </form>
+  </div>
+</aside>
+<script>
+(function(){
+  if (window.__thAdminDrawerInit) return;
+  window.__thAdminDrawerInit = true;
+  var sidebar = document.getElementById('adminSidebar');
+  var backdrop = document.getElementById('adminDrawerBackdrop');
+  var menuBtn = document.getElementById('adminMenuBtn');
+  var closeBtn = document.getElementById('adminCloseBtn');
+  function setOpen(open) {
+    if (!sidebar) return;
+    sidebar.classList.toggle('open', open);
+    if (backdrop) {
+      backdrop.classList.toggle('open', open);
+      backdrop.setAttribute('aria-hidden', open ? 'false' : 'true');
+    }
+    if (menuBtn) menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    document.body.classList.toggle('admin-nav-open', open);
+  }
+  if (menuBtn) menuBtn.addEventListener('click', function(){ setOpen(!sidebar.classList.contains('open')); });
+  if (closeBtn) closeBtn.addEventListener('click', function(){ setOpen(false); });
+  if (backdrop) backdrop.addEventListener('click', function(){ setOpen(false); });
+  if (sidebar) {
+    sidebar.querySelectorAll('a[href]').forEach(function(a){
+      a.addEventListener('click', function(){ setOpen(false); });
+    });
+    var activeLink = sidebar.querySelector('.admin-nav-link.active');
+    if (activeLink && typeof activeLink.scrollIntoView === 'function') {
+      activeLink.scrollIntoView({ block: 'nearest' });
+    }
+  }
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') setOpen(false);
+  });
+})();
+</script>

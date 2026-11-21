@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+  <title>Inbox &amp; Subscribers — TechHaven CMS</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+<div class="admin-shell">
+  <%- include('./sidebar') %>
+
+  <main class="admin-main">
+    <div class="admin-header">
+      <div>
+        <h1>Editorial Inbox &amp; Subscribers</h1>
+        <div style="font-size:0.88rem;color:#64748b;">Reader contact submissions and US/EU newsletter signups.</div>
+      </div>
+      <a href="/admin/inbox/subscribers.csv" class="btn btn-outline">⬇ Export Subscribers CSV</a>
+    </div>
+
+    <div class="admin-split-2">
+      <section class="card">
+        <h2 style="margin:0 0 0.85rem;font-size:1.1rem;">Contact Messages (<%= messages.length %>)</h2>
+        <% if (messages.length === 0) { %>
+        <p style="color:#64748b;">No reader messages yet.</p>
+        <% } else { %>
+        <div style="display:flex;flex-direction:column;gap:0.9rem;">
+          <% messages.forEach(function(m) { %>
+          <div style="border:1px solid #e2e8f0;border-radius:10px;padding:0.9rem;background:<%= m.is_read ? '#fff' : '#eff6ff' %>;">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.35rem;margin-bottom:0.35rem;">
+              <strong><%= m.subject || 'Inquiry' %></strong>
+              <span style="font-size:0.78rem;color:#64748b;"><%= formatDateTime(m.created_at) %></span>
+            </div>
+            <div style="font-size:0.82rem;color:#475569;margin-bottom:0.5rem;">From: <%= m.name %> (<a href="mailto:<%= m.email %>" style="color:#2563eb;"><%= m.email %></a>)</div>
+            <p style="margin:0 0 0.65rem;font-size:0.9rem;white-space:pre-line;"><%= m.message %></p>
+            <div style="display:flex;gap:0.45rem;flex-wrap:wrap;">
+              <% if (!m.is_read) { %>
+              <form action="/admin/inbox/messages/<%= m.id %>/read" method="POST">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="btn btn-outline btn-sm">Mark Read</button>
+              </form>
+              <% } %>
+              <form action="/admin/inbox/messages/<%= m.id %>/delete" method="POST">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+              </form>
+            </div>
+          </div>
+          <% }) %>
+        </div>
+        <% } %>
+      </section>
+
+      <section class="card">
+        <h2 style="margin:0 0 0.85rem;font-size:1.1rem;">Newsletter Subscribers (<%= subscribers.length %>)</h2>
+        <% if (subscribers.length === 0) { %>
+        <p style="color:#64748b;">No newsletter subscribers yet.</p>
+        <% } else { %>
+        <div class="table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Source / Provider</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% subscribers.forEach(function(s) { %>
+              <tr>
+                <td><%= s.email %></td>
+                <td>
+                  <span class="badge <%= s.status === 'confirmed' ? 'badge-pub' : s.status === 'unsubscribed' ? 'badge-danger' : 'badge-draft' %>" style="<%= s.status === 'unsubscribed' ? 'background:#fee2e2;color:#991b1b;' : '' %>"><%= s.status || 'pending' %></span>
+                  <% if (s.gdpr_consent) { %><span style="font-size:0.72rem;color:#16a34a;display:inline-flex;align-items:center;gap:0.2rem;">GDPR <%- icon('check', 12) %></span><% } %>
+                </td>
+                <td><%= s.source %> • <%= s.provider_name || 'local' %></td>
+                <td style="font-size:0.78rem;color:#64748b;"><%= formatDate(s.confirmed_at || s.created_at) %></td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+        <% } %>
+      </section>
+    </div>
+  </main>
+</div>
+</body>
+</html>

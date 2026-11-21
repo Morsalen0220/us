@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+  <title>Dashboard — TechHaven CMS</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+<div class="admin-shell">
+  <%- include('./sidebar') %>
+
+  <main class="admin-main">
+    <div class="admin-header">
+      <div>
+        <h1>Editorial Command Center</h1>
+        <div style="font-size:0.88rem;color:#64748b;">Monitor publishing, Auto-WebP compression savings, SEO health, and AdSense readiness.</div>
+      </div>
+      <a href="/admin/posts/new" class="btn btn-primary">+ Write New Article</a>
+    </div>
+
+    <% if (typeof flash !== 'undefined' && flash) { %>
+    <div class="alert alert-success"><%= flash %></div>
+    <% } %>
+
+    <div class="kpi-grid">
+      <div class="card" style="margin-bottom:0;">
+        <div class="kpi-label">Published Articles</div>
+        <div class="kpi-val"><%= stats.publishedPosts %></div>
+        <div class="kpi-sub"><%= stats.scheduledPosts %> scheduled • <%= stats.reviewPosts %> in review • <%= stats.draftPosts %> drafts</div>
+      </div>
+      <div class="card" style="margin-bottom:0;">
+        <div class="kpi-label">Total Article Views</div>
+        <div class="kpi-val"><%= stats.totalViews.toLocaleString('en-US') %></div>
+        <div class="kpi-sub">SSR Cached &lt;5ms TTFB</div>
+      </div>
+      <div class="card" style="margin-bottom:0;">
+        <div class="kpi-label">WebP Media Assets</div>
+        <div class="kpi-val"><%= stats.mediaCount %></div>
+        <div class="kpi-sub">Avg <%= stats.webpSavingsPercent %>% smaller (<%= formatBytes(stats.webpBytesSaved) %> saved)</div>
+      </div>
+      <div class="card" style="margin-bottom:0;">
+        <div class="kpi-label">Audience &amp; Inbox</div>
+        <div class="kpi-val"><%= stats.subscribersCount %></div>
+        <div class="kpi-sub"><%= stats.unreadMessages %> unread messages</div>
+      </div>
+    </div>
+
+    <div class="admin-split-2">
+      <section class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.85rem;">
+          <h2 style="margin:0;font-size:1.1rem;">Recent Articles</h2>
+          <a href="/admin/posts" style="font-size:0.84rem;color:#2563eb;font-weight:600;">Manage all &rarr;</a>
+        </div>
+        <div class="table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Views</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% recentPosts.forEach(function(p) { %>
+              <tr>
+                <td>
+                  <div style="font-weight:700;"><%= p.title %></div>
+                  <div style="font-size:0.78rem;color:#64748b;"><%= p.category_name || 'Uncategorized' %> • <%= p.reading_time %> min</div>
+                </td>
+                <td>
+                  <span class="badge <%= p.status === 'published' ? 'badge-pub' : 'badge-draft' %>"><%= p.status %></span>
+                </td>
+                <td><%= p.views %></td>
+                <td>
+                  <a href="/admin/posts/<%= p.id %>/edit" class="btn btn-outline btn-sm">Edit</a>
+                </td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 style="margin:0 0 0.85rem;font-size:1.1rem;">SEO &amp; Monetization Quick Check</h2>
+
+        <form action="/admin/settings/toggle-ads" method="POST" style="margin-bottom:0.95rem;">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="hidden" name="return_to" value="/admin">
+          <div class="toggle-row" style="cursor:default;">
+            <div style="min-width:0;">
+              <div class="toggle-row-title" style="display:flex;align-items:center;gap:0.45rem;flex-wrap:wrap;">
+                <span>Ad Slots on Site</span>
+                <span class="badge <%= settings.ads_slots_visible === '1' ? 'badge-pub' : 'badge-draft' %>"><%= settings.ads_slots_visible === '1' ? 'Visible' : 'Hidden (Clean Mode)' %></span>
+              </div>
+              <div class="toggle-row-sub">
+                <%= settings.ads_slots_visible === '1' ? 'Ad containers are enabled for visitors.' : 'All 6 ad containers are completely hidden right now.' %>
+              </div>
+            </div>
+            <label class="toggle-switch" style="cursor:pointer;" title="Toggle Ad Slots Visibility">
+              <input type="checkbox" name="ads_slots_visible" value="1" <%= settings.ads_slots_visible === '1' ? 'checked' : '' %> onchange="this.form.submit()">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </form>
+
+        <ul class="seo-checks">
+          <li class="seo-check-pass"><%- icon('check', 14) %> Auto-WebP Converter: Active (all uploads convert to <code>.webp</code> + <code>-thumb.webp</code>)</li>
+          <li class="seo-check-pass"><%- icon('check', 14) %> XML Image Sitemap &amp; RSS Feed: <a href="/sitemap.xml" target="_blank" style="color:#2563eb;">/sitemap.xml</a> &amp; <a href="/rss.xml" target="_blank" style="color:#2563eb;">/rss.xml</a></li>
+          <li class="seo-check-pass"><%- icon('check', 14) %> Compliance Pages: About, Contact, Privacy (GDPR/CCPA), Terms, Disclaimer live</li>
+          <li class="<%= settings.ads_slots_visible !== '1' ? 'seo-check-pass' : (settings.ads_enabled === '1' && settings.adsense_publisher_id ? 'seo-check-pass' : 'seo-check-fail') %>">
+            <% if (settings.ads_slots_visible !== '1') { %>
+              <%- icon('check', 14) %> Ad Slots Hidden: Clean ad-free layout active until you turn the switch ON
+            <% } else if (settings.ads_enabled === '1' && settings.adsense_publisher_id) { %>
+              <%- icon('check', 14) %> Google AdSense Active (<%= settings.adsense_publisher_id %>)
+            <% } else { %>
+              ○ Ad Slots Visible / Awaiting AdSense Code — configure in <a href="/admin/settings" style="color:#2563eb;">Settings</a>
+            <% } %>
+          </li>
+        </ul>
+
+        <h3 style="margin:1.25rem 0 0.65rem;font-size:0.96rem;">Top Performing Articles</h3>
+        <div style="display:flex;flex-direction:column;gap:0.55rem;font-size:0.86rem;">
+          <% topPosts.forEach(function(tp) { %>
+          <div style="display:flex;justify-content:space-between;gap:0.5rem;padding-bottom:0.45rem;border-bottom:1px solid #e2e8f0;">
+            <a href="/article/<%= tp.slug %>" target="_blank" style="font-weight:600;color:#1e293b;"><%= tp.title %></a>
+            <span style="color:#64748b;white-space:nowrap;"><%= tp.views %> views</span>
+          </div>
+          <% }) %>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+</body>
+</html>

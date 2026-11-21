@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+  <title>Tech News Timelines — TechHaven CMS</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+<div class="admin-shell">
+  <%- include('./sidebar') %>
+
+  <main class="admin-main">
+    <div class="admin-header">
+      <div><h1>Tech News Timelines</h1></div>
+      <a href="/timelines" target="_blank" class="btn btn-outline">View Public Timelines &rarr;</a>
+    </div>
+
+    <% if (flash) { %><div class="alert alert-success"><%= flash %></div><% } %>
+
+    <div class="admin-grid-2" style="gap:1.25rem;align-items:start;">
+      <section class="card">
+        <h2 style="margin:0 0 0.85rem;font-size:1.05rem;">Create / Update Timeline Tracker</h2>
+        <form action="/admin/timelines" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="field"><label>Timeline Title</label><input type="text" name="title" required></div>
+          <div class="field"><label>Slug (optional)</label><input type="text" name="slug"></div>
+          <div class="field"><label>Region</label><input type="text" name="region" value="USA & Europe"></div>
+          <div class="field"><label>Description</label><textarea name="description" rows="2"></textarea></div>
+          <button type="submit" class="btn btn-primary">Save Timeline</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2 style="margin:0 0 0.85rem;font-size:1.05rem;">Add Timeline Milestone Event</h2>
+        <form action="/admin/timelines/events" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="field">
+            <label>Timeline</label>
+            <select name="timeline_id">
+              <% timelines.forEach(function(tl) { %><option value="<%= tl.id %>"><%= tl.title %></option><% }) %>
+            </select>
+          </div>
+          <div class="field"><label>Date (YYYY-MM-DD)</label><input type="text" name="event_date" value="<%= new Date().toISOString().slice(0, 10) %>" required></div>
+          <div class="field"><label>Event Headline</label><input type="text" name="headline" required></div>
+          <div class="field"><label>Summary</label><textarea name="summary" rows="2"></textarea></div>
+          <div class="admin-grid-2" style="gap:0.5rem;">
+            <div class="field"><label>Related Article Slug</label><input type="text" name="post_slug"></div>
+            <div class="field"><label>Official Source URL</label><input type="url" name="source_url"></div>
+          </div>
+          <div class="field"><label style="justify-content:flex-start;gap:0.4rem;"><input type="checkbox" name="is_major" value="1"> Major Milestone</label></div>
+          <button type="submit" class="btn btn-primary">Add Event</button>
+        </form>
+      </section>
+    </div>
+
+    <section class="card">
+      <h2 style="margin:0 0 0.85rem;font-size:1.05rem;">Recent Timeline Events (<%= events.length %>)</h2>
+      <div class="table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>Date</th><th>Headline</th><th>Action</th></tr></thead>
+          <tbody>
+            <% events.forEach(function(ev) { %>
+            <tr>
+              <td><strong><%= ev.event_date %></strong></td>
+              <td><%= ev.headline %><div style="font-size:0.78rem;color:#64748b;"><%= ev.summary %></div></td>
+              <td>
+                <form action="/admin/timelines/events/<%= ev.id %>/delete" method="POST">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                </form>
+              </td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>
