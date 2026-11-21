@@ -186,4 +186,4 @@ npm run seed    # Run database seeder/migrator manually
 - **Public Site**: `http://localhost:3000/`
 - **Admin CMS**: `http://localhost:3000/admin`
 - **Health Endpoint**: `http://localhost:3000/health`
-- **Default Admin Account**: `admin@techhavenus.com` / `TechHaven@2026!` *(change immediately at `/admin/settings`)*
+
