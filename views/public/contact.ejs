@@ -8,19 +8,24 @@
   <div class="page-card">
     <h1 style="margin-top:0;">Contact TechHaven US</h1>
     <p style="color:var(--text-muted);margin-bottom:1.15rem;">
-      Have a breaking US or Europe tech tip, press release, correction request, or advertising inquiry? Reach our editorial desk directly at
-      <a href="mailto:<%= settings.contact_email || 'contact@techhavenus.com' %>" style="color:var(--accent);font-weight:600;"><%= settings.contact_email || 'contact@techhavenus.com' %></a> or use the form below.
+      Have a question, feedback, article correction, topic suggestion, or partnership inquiry? Reach our team directly at
+      <a href="mailto:<%= settings.contact_email || 'contact@techhavenus.com' %>" style="color:var(--accent);font-weight:600;"><%= settings.contact_email || 'contact@techhavenus.com' %></a> or send a message using the form below. We typically respond within 1–2 business days.
     </p>
 
     <div style="background:var(--surface-alt);border:1px solid var(--border);border-radius:12px;padding:1rem 1.2rem;margin-bottom:1.5rem;font-size:0.9rem;">
-      <div style="font-weight:800;margin-bottom:0.35rem;">Publisher Imprint &amp; Physical Mailing Address</div>
-      <div><strong><%= settings.publisher_legal_name || 'TechHaven US' %></strong> • Owner: <%= settings.publisher_owner_name || 'Alex Mercer' %></div>
-      <div><%= [settings.publisher_street_address, settings.publisher_city || 'New York', [settings.publisher_state || 'NY', settings.publisher_postal_code].filter(Boolean).join(' '), settings.publisher_country || 'United States'].filter(Boolean).join(', ') %></div>
-      <div style="margin-top:0.25rem;"><% if (settings.publisher_phone) { %>Phone: <%= settings.publisher_phone %> • <% } %>Privacy / GDPR: <a href="mailto:<%= settings.privacy_email || 'privacy@techhavenus.com' %>" style="color:var(--accent);"><%= settings.privacy_email || 'privacy@techhavenus.com' %></a></div>
+      <div style="font-weight:800;margin-bottom:0.35rem;">Contact Information</div>
+      <div><strong><%= settings.publisher_legal_name || 'TechHaven US' %></strong> • <%= settings.publisher_owner_name || 'Alex Mercer' %></div>
+      <div>Location: <%= [settings.publisher_street_address, settings.publisher_city || 'New York', [settings.publisher_state || 'NY', settings.publisher_postal_code].filter(Boolean).join(' '), settings.publisher_country || 'United States'].filter(Boolean).join(', ') %></div>
+      <div style="margin-top:0.3rem;">
+        General: <a href="mailto:<%= settings.contact_email || 'contact@techhavenus.com' %>" style="color:var(--accent);"><%= settings.contact_email || 'contact@techhavenus.com' %></a> •
+        Editorial: <a href="mailto:editorial@techhavenus.com" style="color:var(--accent);">editorial@techhavenus.com</a> •
+        Privacy / GDPR: <a href="mailto:<%= settings.privacy_email || 'privacy@techhavenus.com' %>" style="color:var(--accent);"><%= settings.privacy_email || 'privacy@techhavenus.com' %></a>
+        <% if (settings.publisher_phone) { %> • Phone: <%= settings.publisher_phone %><% } %>
+      </div>
     </div>
 
     <% if (status === 'success') { %>
-    <div class="alert alert-success">Thank you! Your message has been delivered to the TechHaven US editorial team.</div>
+    <div class="alert alert-success">Thank you! Your message has been received by the TechHaven US team.</div>
     <% } else if (status === 'error' && errorMsg) { %>
     <div class="alert alert-error"><%= errorMsg %></div>
     <% } %>
@@ -35,12 +40,12 @@
 
       <div class="form-field">
         <label for="contactEmail">Email Address</label>
-        <input id="contactEmail" type="email" name="email" value="<%= formValues.email || '' %>" required placeholder="jane@company.com">
+        <input id="contactEmail" type="email" name="email" value="<%= formValues.email || '' %>" required placeholder="jane@example.com">
       </div>
 
       <div class="form-field">
         <label for="contactSubject">Subject</label>
-        <input id="contactSubject" type="text" name="subject" value="<%= formValues.subject || '' %>" placeholder="News Tip / Correction / Partnership">
+        <input id="contactSubject" type="text" name="subject" value="<%= formValues.subject || '' %>" placeholder="Feedback / Correction / Partnership / General Inquiry">
       </div>
 
       <div class="form-field">

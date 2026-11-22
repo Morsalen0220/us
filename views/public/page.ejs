@@ -11,23 +11,35 @@
     <hr style="border:none;border-top:1px solid var(--border);margin:1.5rem 0;">
 
     <% if (pageKey === 'about') { %>
-    <p><strong><%= settings.site_name || 'TechHaven US' %></strong> (<code><%= siteUrl %></code>) is an independent digital technology publication focused on North American and European software engineering, artificial intelligence, gaming ecosystems (including Rockstar’s GTA 5 and GTA 6), hardware benchmarks, and high-speed web tutorials.</p>
-    <h2>Our Editorial Mission</h2>
+    <p><strong><%= settings.site_name || 'TechHaven US' %></strong> (<code><%= siteUrl %></code>) is an independent US-focused technology publication dedicated to practical tech guides, AI updates, gadget and hardware reviews, software tips, cybersecurity best practices, and gaming coverage.</p>
+
+    <h2>What We Cover</h2>
     <ul>
-      <li><strong>Actionable Depth Over Clickbait:</strong> Every article explains what happened, why it matters in the US and Europe, and what practical steps readers can take.</li>
-      <li><strong>Benchmark Integrity:</strong> Hardware tests and Core Web Vitals optimization guides are verified directly in-house.</li>
-      <li><strong>Speed-First Reader Experience:</strong> Built on lightweight server-side rendering and 100% WebP imagery so pages load instantly on desktop and mobile.</li>
+      <li><strong>AI &amp; Modern Software:</strong> Clear explainers, practical comparisons, and step-by-step guides on ChatGPT, Gemini, Claude, Windows, macOS, Android, iOS, and everyday productivity apps.</li>
+      <li><strong>Gadgets, Hardware &amp; Reviews:</strong> Straightforward buying guides, specification breakdowns, and honest side-by-side comparisons for smartphones, laptops, GPUs, and consumer devices.</li>
+      <li><strong>Cybersecurity &amp; Online Privacy:</strong> Practical guides on passkeys, privacy browsers, account safety, scam awareness, and protecting personal devices.</li>
+      <li><strong>Gaming &amp; PC Performance:</strong> Coverage of major titles (including GTA 5 and GTA 6), console and PC updates, settings guides, and troubleshooting.</li>
+      <li><strong>How-To Tutorials &amp; Developer Guides:</strong> Clear, jargon-free walkthroughs designed to solve real technical problems quickly.</li>
     </ul>
-    <h2 id="ownership">Ownership, Publisher Imprint &amp; Mailing Address</h2>
+
+    <h2>Our Approach</h2>
+    <ul>
+      <li><strong>Helpful Depth Over Clickbait:</strong> Every guide and review focuses on clear explanations, verified official details, and actionable steps readers can use immediately.</li>
+      <li><strong>Transparency &amp; Independence:</strong> Advertising never influences our product coverage, comparisons, or editorial opinions.</li>
+      <li><strong>Fast, Clean Reading Experience:</strong> Built on lightweight server-side rendering and optimized WebP imagery for quick loading on both desktop and mobile devices.</li>
+    </ul>
+
+    <h2 id="ownership">Site Information &amp; Contact</h2>
     <div style="background:var(--surface-alt);border:1px solid var(--border);border-radius:12px;padding:1rem 1.2rem;font-size:0.94rem;">
       <p style="margin:0 0 0.45rem;"><strong>Publisher / Brand:</strong> <%= settings.publisher_legal_name || 'TechHaven US' %></p>
       <p style="margin:0 0 0.45rem;"><strong>Founder &amp; Editor:</strong> <%= settings.publisher_owner_name || 'Alex Mercer' %></p>
       <p style="margin:0 0 0.45rem;"><strong>Location:</strong> <%= [settings.publisher_street_address, settings.publisher_city || 'New York', [settings.publisher_state || 'NY', settings.publisher_postal_code].filter(Boolean).join(' '), settings.publisher_country || 'United States'].filter(Boolean).join(', ') %></p>
       <% if (settings.publisher_phone) { %><p style="margin:0 0 0.45rem;"><strong>Phone:</strong> <%= settings.publisher_phone %></p><% } %>
-      <p style="margin:0;"><strong>Contact:</strong> <a href="mailto:<%= settings.contact_email || 'contact@techhavenus.com' %>"><%= settings.contact_email || 'contact@techhavenus.com' %></a> • <strong>Editorial Desk:</strong> <a href="mailto:editorial@techhavenus.com">editorial@techhavenus.com</a> • <strong>Privacy &amp; GDPR:</strong> <a href="mailto:<%= settings.privacy_email || 'privacy@techhavenus.com' %>"><%= settings.privacy_email || 'privacy@techhavenus.com' %></a></p>
+      <p style="margin:0;"><strong>General Contact:</strong> <a href="mailto:<%= settings.contact_email || 'contact@techhavenus.com' %>"><%= settings.contact_email || 'contact@techhavenus.com' %></a> • <strong>Editorial:</strong> <a href="mailto:editorial@techhavenus.com">editorial@techhavenus.com</a> • <strong>Privacy &amp; GDPR:</strong> <a href="mailto:<%= settings.privacy_email || 'privacy@techhavenus.com' %>"><%= settings.privacy_email || 'privacy@techhavenus.com' %></a></p>
     </div>
+
     <% if (authors && authors.length > 0) { %>
-    <h2>Editorial Team</h2>
+    <h2>Contributors &amp; Editorial Team</h2>
     <% authors.forEach(function(a) { %>
     <div class="author-box">
       <div class="author-avatar"><%= a.name.slice(0, 1).toUpperCase() %></div>
@@ -40,43 +52,99 @@
     <% } %>
 
     <% } else if (pageKey === 'editorial') { %>
-    <p>At <strong><%= settings.site_name || 'TechHaven US' %></strong>, accuracy and reader trust come before speed-to-publish. Every news report, tutorial, and review undergoes verification prior to publication.</p>
-    <h2>Source Verification &amp; Corrections</h2>
+    <p>At <strong><%= settings.site_name || 'TechHaven US' %></strong>, accuracy, clarity, and reader trust come first. Every guide, review, comparison, and tech update is written to be genuinely useful and easy to verify.</p>
+
+    <h2>1. Accuracy &amp; Source Verification</h2>
     <ul>
-      <li>Primary announcements from technology companies, regulators (US FTC/FCC, European Commission), and game studios are linked and cross-checked.</li>
-      <li>If a factual error occurs, we update the article promptly and display an updated publication timestamp.</li>
-      <li>Report corrections anytime via <a href="/contact">our contact desk</a> or email <a href="mailto:<%= settings.contact_email || 'contact@techhavenus.com' %>"><%= settings.contact_email || 'contact@techhavenus.com' %></a>.</li>
+      <li>We rely on official documentation, vendor announcements, changelogs, regulatory publications, and credible primary references whenever covering technical updates or specifications.</li>
+      <li>When information is still developing or based on early reports, we clearly state what is confirmed versus what may change.</li>
     </ul>
+
+    <h2>2. Corrections &amp; Content Updates</h2>
+    <ul>
+      <li>Technology moves quickly. We periodically review and refresh evergreen guides, tutorials, and software walkthroughs when interfaces, pricing, or settings change.</li>
+      <li>If a factual error is identified, we correct it promptly and note significant updates transparently.</li>
+      <li>To request a correction or suggest an update, please use <a href="/contact">our contact page</a> or email <a href="mailto:editorial@techhavenus.com">editorial@techhavenus.com</a>.</li>
+    </ul>
+
+    <h2>3. Editorial Independence &amp; Advertising</h2>
+    <p>Display advertisements shown through Google AdSense help keep our guides free to read. Advertisers and sponsors have zero control over our topics, reviews, comparisons, or recommendations.</p>
 
     <% } else if (pageKey === 'privacy') { %>
-    <p>This Privacy Policy explains how <strong><%= settings.site_name || 'TechHaven US' %></strong> (<code><%= siteUrl %></code>) collects, uses, and safeguards information for visitors across the United States (including California under CCPA/CPRA), the United Kingdom, and the European Economic Area (GDPR).</p>
+    <p><em>Last Updated: November 2026</em></p>
+    <p>This Privacy Policy explains how <strong><%= settings.site_name || 'TechHaven US' %></strong> (<code><%= siteUrl %></code>) collects, uses, and protects information when you visit our website from the United States (including California under CCPA/CPRA), the United Kingdom, the European Economic Area (GDPR), or elsewhere.</p>
+
     <h2>1. Information We Collect</h2>
     <ul>
-      <li><strong>Information You Voluntarily Provide:</strong> Email addresses submitted to our newsletter and messages sent via our contact form.</li>
-      <li><strong>Essential &amp; Analytics Storage:</strong> Theme preferences (stored locally in your browser) and privacy-respecting analytics when consented.</li>
+      <li><strong>Information You Voluntarily Provide:</strong> Your name, email address, and message content when you submit our contact form or subscribe to our newsletter (which uses double opt-in confirmation and 1-click unsubscribe).</li>
+      <li><strong>Automatically Collected Log Data:</strong> Like most websites, our server logs standard technical details such as IP address, browser type, referring page, pages visited, and timestamps to maintain site security, prevent abuse, and diagnose errors.</li>
+      <li><strong>Local Browser Preferences:</strong> Non-personal settings such as Dark/Light theme selection, saved reading list bookmarks, and topic feed preferences stored locally in your browser.</li>
     </ul>
-    <h2>2. Google AdSense &amp; Third-Party Advertising Cookies</h2>
-    <p>We partner with <strong>Google AdSense</strong> to support independent tech guides, reviews, and free content. Third-party vendors, including Google, use cookies (such as the DoubleClick cookie) to serve ads based on a user’s prior visits to this website or other websites on the internet.</p>
+
+    <h2>2. Cookies, Google AdSense &amp; Third-Party Advertising</h2>
+    <p>We partner with <strong>Google AdSense</strong> and third-party advertising networks to support our free tech guides, reviews, and tutorials.</p>
     <ul>
-      <li>Users in the EEA, UK, and US can customize or opt out of personalized advertising by visiting <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer">Google Ads Settings</a> or <a href="https://www.aboutads.info/choices/" target="_blank" rel="noopener noreferrer">YourAdChoices</a>.</li>
-      <li>Essential-only consent disables ad personalization signals via Google Consent Mode v2.</li>
+      <li>Third-party vendors, including Google, use cookies (such as the DoubleClick/Google advertising cookies) to serve ads based on a user’s prior visits to this website or other websites on the internet.</li>
+      <li>Google’s use of advertising cookies enables it and its partners to serve ads to our users based on their visit to <code><%= siteUrl %></code> and/or other sites on the internet.</li>
+      <li>You can learn how Google uses data from partner sites at <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener noreferrer">Google Privacy &amp; Terms</a>, and you may opt out of personalized advertising at <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer">Google Ads Settings</a> or <a href="https://www.aboutads.info/choices/" target="_blank" rel="noopener noreferrer">YourAdChoices</a>.</li>
+      <li>Choosing <em>Essential Only</em> in our Cookie Consent Banner disables ad personalization signals via Google Consent Mode v2. You can also manage or block cookies directly through your browser settings.</li>
     </ul>
-    <h2>3. Your GDPR &amp; CCPA Rights</h2>
-    <p>You may request access to, correction of, or deletion of any personal email data you submitted to us by contacting <a href="mailto:<%= settings.contact_email || 'contact@techhavenus.com' %>"><%= settings.contact_email || 'contact@techhavenus.com' %></a>.</p>
+
+    <h2>3. Analytics &amp; Third-Party Links</h2>
+    <p>We may use privacy-respecting analytics (such as Google Analytics 4, when enabled and consented) to understand which articles are most helpful and improve site speed. Our articles also contain links to external websites (such as software vendors or official support pages); we are not responsible for the privacy practices of external sites.</p>
+
+    <h2>4. Data Retention &amp; Security</h2>
+    <p>We retain contact form submissions and newsletter subscriptions only as long as necessary to respond to inquiries or deliver requested emails. You can unsubscribe from newsletters at any time with one click.</p>
+
+    <h2>5. Children’s Privacy (COPPA)</h2>
+    <p><strong><%= settings.site_name || 'TechHaven US' %></strong> is intended for a general audience and does not knowingly collect personal information from children under the age of 13 (or 16 in the EEA). If you believe a child has submitted personal data, please contact us immediately so we can delete it.</p>
+
+    <h2>6. Your Privacy Rights (GDPR &amp; CCPA/CPRA)</h2>
+    <p>Depending on your location, you have the right to request access to, correction of, or deletion of personal information you have submitted to us, and to opt out of personalized advertising. To exercise any privacy request, email <a href="mailto:<%= settings.privacy_email || 'privacy@techhavenus.com' %>"><%= settings.privacy_email || 'privacy@techhavenus.com' %></a>.</p>
+
+    <h2>7. Changes to This Privacy Policy</h2>
+    <p>We may update this Privacy Policy from time to time to reflect changes in legal requirements or site features. Any updates will be posted on this page with a revised date.</p>
 
     <% } else if (pageKey === 'terms') { %>
-    <p>By accessing <strong><%= settings.site_name || 'TechHaven US' %></strong> (<code><%= siteUrl %></code>), you agree to abide by these Terms of Service and applicable US and European laws.</p>
-    <h2>Intellectual Property</h2>
-    <p>Original articles, benchmarks, tutorials, and custom editorial graphics published on TechHaven US remain our intellectual property. Short quoted excerpts are permitted with clear attribution and a canonical link back to the original article.</p>
-    <h2>Acceptable Use</h2>
-    <p>Automated scraping that disrupts site availability, unauthorized access attempts against administrative endpoints, and spam submissions are strictly prohibited.</p>
+    <p><em>Last Updated: November 2026</em></p>
+    <p>By accessing or using <strong><%= settings.site_name || 'TechHaven US' %></strong> (<code><%= siteUrl %></code>), you agree to these Terms of Service and all applicable laws. If you do not agree with these terms, please discontinue use of the website.</p>
+
+    <h2>1. Informational &amp; Educational Use</h2>
+    <p>All articles, how-to tutorials, software walkthroughs, product reviews, and AI directory listings on this website are provided for general informational and educational purposes only.</p>
+
+    <h2>2. Intellectual Property &amp; Attribution</h2>
+    <p>Original articles, guides, written reviews, and custom graphics published on <strong><%= settings.site_name || 'TechHaven US' %></strong> are protected by copyright and remain our intellectual property. Brief quoted excerpts are permitted for commentary or reference with clear attribution and a direct link back to the original page. Full republication or automated scraping without prior written permission is prohibited.</p>
+
+    <h2>3. Acceptable Use</h2>
+    <p>You agree not to misuse this website, including attempting unauthorized access to administrative endpoints, submitting spam or malicious payloads through forms, or running automated scrapers that degrade site availability for other readers.</p>
+
+    <h2>4. External Links &amp; Third-Party Services</h2>
+    <p>Our content frequently links to third-party software, tools, documentation, and external websites for reader convenience. We do not control and are not responsible for the content, availability, pricing, or policies of third-party websites.</p>
+
+    <h2>5. Limitation of Liability</h2>
+    <p>This website and its content are provided on an “as is” and “as available” basis without warranties of any kind. <strong><%= settings.site_name || 'TechHaven US' %></strong> is not liable for any direct, indirect, or incidental damages resulting from your use of the website or reliance on any tutorial, configuration step, or third-party software mentioned.</p>
+
+    <h2>6. Changes &amp; Contact</h2>
+    <p>We may revise these Terms of Service at any time by updating this page. Questions about these terms can be directed to <a href="mailto:<%= settings.contact_email || 'contact@techhavenus.com' %>"><%= settings.contact_email || 'contact@techhavenus.com' %></a>.</p>
 
     <% } else if (pageKey === 'disclaimer') { %>
-    <p>Content published on <strong><%= settings.site_name || 'TechHaven US' %></strong> is provided for informational and educational purposes.</p>
-    <h2>Trademarks &amp; Game Coverage</h2>
-    <p>Product names, logos, and trademarks—including Grand Theft Auto / GTA 5 / GTA 6 (Rockstar Games / Take-Two Interactive), NVIDIA, AMD, OpenAI, and Google—belong to their respective owners and are referenced strictly for editorial news and review purposes.</p>
-    <h2>Advertising Disclosure</h2>
-    <p>Display advertisements served through Google AdSense are clearly labeled as <em>Advertisement</em> and do not influence our editorial reviews or rankings.</p>
+    <p><em>Last Updated: November 2026</em></p>
+    <p>The information published on <strong><%= settings.site_name || 'TechHaven US' %></strong> (<code><%= siteUrl %></code>) is provided in good faith for general informational and educational purposes only.</p>
+
+    <h2>1. Technical Guides, Software &amp; Security Advice</h2>
+    <p>While we strive to keep our tutorials, troubleshooting steps, software settings, and cybersecurity guides accurate and up to date, software interfaces, operating systems, and policies change frequently. Any action you take based on our guides is strictly at your own discretion and risk; we always recommend backing up important data before making system or account changes.</p>
+
+    <h2>2. Reviews, Comparisons &amp; No Professional Guarantee</h2>
+    <p>Our product reviews, AI tool summaries, and hardware comparisons reflect editorial research and analysis at the time of writing. Specifications, pricing, and availability may change without notice—always verify final details on the official vendor website before making a purchase decision.</p>
+
+    <h2>3. Trademarks &amp; Brand Mentions</h2>
+    <p>All product names, logos, and trademarks—including Grand Theft Auto / GTA 5 / GTA 6 (Rockstar Games / Take-Two Interactive), PlayStation (Sony), Xbox &amp; Windows (Microsoft), Apple, Google, NVIDIA, AMD, OpenAI, and Anthropic—are the property of their respective owners and are used strictly for identification, review, and educational commentary. <strong><%= settings.site_name || 'TechHaven US' %></strong> is an independent site and is not affiliated with or endorsed by these companies.</p>
+
+    <h2>4. Advertising &amp; Affiliate Disclosure</h2>
+    <p>Display advertisements served through <strong>Google AdSense</strong> are clearly labeled as <em>Advertisement</em> and do not influence our editorial opinions, comparisons, or guides. If any article includes an affiliate link in the future, it will be clearly disclosed on the page.</p>
+
+    <h2>5. External Links Disclaimer</h2>
+    <p>Links to external websites are provided for reference and convenience. We do not guarantee the accuracy, relevance, or ongoing availability of content hosted on third-party domains.</p>
     <% } %>
   </article>
 </main>
