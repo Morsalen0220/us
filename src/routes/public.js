@@ -211,7 +211,7 @@ router.get('/', withCache(60_000), (req, res) => {
     seo: {
       title: pageTitle,
       subtitle: settings.site_tagline || 'US & Europe Tech, AI, GTA & Developer Tutorials',
-      description: settings.site_description || 'Independent technology journalism, AI breakthroughs, GTA 5/6 coverage, and speed optimization tutorials for US & EU readers.',
+      description: settings.site_description || 'Independent tech guides, AI updates, gadget reviews, software tips, cybersecurity insights, and gaming coverage for US readers.',
       tags: 'US Tech News, Europe Tech, Artificial Intelligence, GTA 5, GTA 6, Developer Tutorials, Cybersecurity',
       canonical: page > 1 ? `${siteUrl}/?page=${page}` : `${siteUrl}/`,
       ogType: 'website',
@@ -438,7 +438,7 @@ router.post('/api/push/subscribe', (req, res) => {
       region_pref = excluded.region_pref
   `).run(endpoint, p256dh, auth, regionPref, ua);
 
-  return res.json({ ok: true, message: 'Breaking News Push Alerts enabled!' });
+  return res.json({ ok: true, message: 'Tech Update Alerts enabled!' });
 });
 
 router.post('/api/push/unsubscribe', (req, res) => {
@@ -594,8 +594,8 @@ router.get('/timelines', withCache(60_000), (req, res) => {
     timelines,
     trendingPosts: getTrendingPosts(5),
     seo: {
-      title: `Tech News Timelines — Story Trackers | ${settings.site_name || 'TechHaven US'}`,
-      description: 'Follow chronological tech news timelines covering GTA 6, AI regulations, and major hardware launches.',
+      title: `Tech Timelines — Topic Trackers | ${settings.site_name || 'TechHaven US'}`,
+      description: 'Follow chronological tech timelines covering GTA 6, AI updates, and major hardware launches.',
       canonical: `${siteUrl}/timelines`,
       robots: 'index, follow'
     },
@@ -729,7 +729,7 @@ router.get('/my-feed', (req, res) => {
     trendingPosts: getTrendingPosts(5),
     seo: {
       title: `My Personalized Feed — ${settings.site_name || 'TechHaven US'}`,
-      description: 'Customize your personalized US & Europe tech, AI, gaming, and tutorial news feed.',
+      description: 'Customize your personalized US tech, AI, gadget review, gaming, and tutorial feed.',
       canonical: `${siteUrl}/my-feed`,
       robots: 'noindex, follow'
     },
@@ -1011,7 +1011,7 @@ router.get('/contact', (req, res) => {
     formValues: {},
     seo: {
       title: `Contact Editorial Team — ${settings.site_name || 'TechHaven US'}`,
-      description: `Send news tips, corrections, press inquiries, or partnership questions to ${settings.site_name || 'TechHaven US'}.`,
+      description: `Contact ${settings.site_name || 'TechHaven US'} for questions, feedback, corrections, or partnership inquiries.`,
       canonical: `${siteUrl}/contact`,
       robots: 'index, follow'
     },

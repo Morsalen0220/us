@@ -8,7 +8,7 @@ export function generateSubscriberTokens() {
 }
 
 export function formatPhysicalAddress(settings = {}) {
-  const legalName = settings.publisher_legal_name || settings.site_name || 'TechHaven US Media LLC';
+  const legalName = settings.publisher_legal_name || settings.site_name || 'TechHaven US';
   const street = settings.publisher_street_address || '';
   const city = settings.publisher_city || 'New York';
   const state = settings.publisher_state || 'NY';

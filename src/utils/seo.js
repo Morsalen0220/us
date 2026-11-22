@@ -49,7 +49,7 @@ export function buildWebsiteJsonLd(settings) {
 export function buildOrganizationJsonLd(settings) {
   const siteUrl = (settings.site_url || 'https://techhavenus.com').replace(/\/+$/, '');
   const siteName = settings.site_name || 'TechHaven US';
-  const legalName = settings.publisher_legal_name || 'TechHaven US Media LLC';
+  const legalName = settings.publisher_legal_name || 'TechHaven US';
   const ownerName = settings.publisher_owner_name || 'Alex Mercer';
 
   return {

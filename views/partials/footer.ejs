@@ -9,7 +9,7 @@
           <%= settings.site_description || 'Independent technology news, AI analysis, GTA & PC gaming coverage, and developer tutorials.' %>
         </p>
         <div class="footer-publisher-meta">
-          <div><strong><%= settings.publisher_legal_name || 'TechHaven US Media LLC' %></strong> (<%= settings.publisher_owner_name || 'Alex Mercer' %>)</div>
+          <div><strong><%= settings.publisher_legal_name || 'TechHaven US' %></strong> (<%= settings.publisher_owner_name || 'Alex Mercer' %>)</div>
           <div><%= [settings.publisher_street_address, settings.publisher_city || 'New York', [settings.publisher_state || 'NY', settings.publisher_postal_code].filter(Boolean).join(' '), settings.publisher_country || 'United States'].filter(Boolean).join(', ') %></div>
           <div class="footer-emails">
             <span>Contact: <a href="mailto:<%= settings.contact_email || 'contact@techhavenus.com' %>"><%= settings.contact_email || 'contact@techhavenus.com' %></a></span>
@@ -35,9 +35,9 @@
         <ul class="footer-links">
           <li><a href="/briefing">Daily AI Briefing</a></li>
           <li><a href="/ai-tools">AI Tools Directory</a></li>
-          <li><a href="/timelines">Tech News Timelines</a></li>
+          <li><a href="/timelines">Tech Timelines</a></li>
           <li><a href="/videos">Video Reviews &amp; Shorts</a></li>
-          <li><a href="/my-feed">Personalized News Feed</a></li>
+          <li><a href="/my-feed">My Personalized Feed</a></li>
         </ul>
       </div>
 
@@ -46,7 +46,7 @@
         <ul class="footer-links">
           <li><a href="/about">About &amp; Editorial Team</a></li>
           <li><a href="/editorial-policy">Editorial &amp; Fact-Check Policy</a></li>
-          <li><a href="/contact">Contact &amp; News Tips</a></li>
+          <li><a href="/contact">Contact Us</a></li>
           <li><a href="/privacy-policy">Privacy Policy (GDPR / CCPA)</a></li>
           <li><a href="/terms">Terms of Service</a></li>
           <li><a href="/disclaimer">Disclaimer</a></li>
@@ -57,7 +57,7 @@
 
     <div class="footer-bottom">
       <span>&copy; <%= new Date().getFullYear() %> <%= settings.site_name || 'TechHaven US' %> (<%= siteUrl %>). All rights reserved.</span>
-      <span>Built for ultra-fast Core Web Vitals &amp; independent tech journalism.</span>
+      <span>Independent tech guides, AI updates, gadget reviews &amp; security insights.</span>
     </div>
   </div>
 </footer>

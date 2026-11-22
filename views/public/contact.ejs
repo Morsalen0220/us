@@ -14,7 +14,7 @@
 
     <div style="background:var(--surface-alt);border:1px solid var(--border);border-radius:12px;padding:1rem 1.2rem;margin-bottom:1.5rem;font-size:0.9rem;">
       <div style="font-weight:800;margin-bottom:0.35rem;">Publisher Imprint &amp; Physical Mailing Address</div>
-      <div><strong><%= settings.publisher_legal_name || 'TechHaven US Media LLC' %></strong> • Owner: <%= settings.publisher_owner_name || 'Alex Mercer' %></div>
+      <div><strong><%= settings.publisher_legal_name || 'TechHaven US' %></strong> • Owner: <%= settings.publisher_owner_name || 'Alex Mercer' %></div>
       <div><%= [settings.publisher_street_address, settings.publisher_city || 'New York', [settings.publisher_state || 'NY', settings.publisher_postal_code].filter(Boolean).join(' '), settings.publisher_country || 'United States'].filter(Boolean).join(', ') %></div>
       <div style="margin-top:0.25rem;"><% if (settings.publisher_phone) { %>Phone: <%= settings.publisher_phone %> • <% } %>Privacy / GDPR: <a href="mailto:<%= settings.privacy_email || 'privacy@techhavenus.com' %>" style="color:var(--accent);"><%= settings.privacy_email || 'privacy@techhavenus.com' %></a></div>
     </div>
