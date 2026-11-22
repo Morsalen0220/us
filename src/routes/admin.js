@@ -266,8 +266,8 @@ router.get('/posts/new', (req, res) => {
       author_id: req.user.id,
       status: 'draft',
       region: 'USA & Europe',
-      is_featured: 0,
-      is_trending: 0,
+      is_featured: 1,
+      is_trending: 1,
       is_breaking: 0,
       is_editors_pick: 0,
       featured_image: '',
@@ -287,15 +287,15 @@ router.get('/posts/new', (req, res) => {
       robots: 'index, follow',
       key_takeaways_text: '',
       whats_new: '',
-      fact_check_status: 'Fact-Checked',
-      last_fact_checked: new Date().toISOString().slice(0, 10),
+      fact_check_status: '',
+      last_fact_checked: '',
       official_sources_text: '',
       corrections_text: '',
       video_url: '',
       video_title: '',
       video_duration: '',
       video_is_short: 0,
-      published_at: new Date().toISOString().slice(0, 16)
+      published_at: ''
     },
     authors: getAuthorsList(),
     revisions: [],
@@ -345,7 +345,7 @@ function renderAdminArticlePreview(req, res, previewPostData) {
     excerpt,
     status: previewPostData.status || 'draft',
     region: previewPostData.region || 'USA & Europe',
-    fact_check_status: previewPostData.fact_check_status || 'Fact-Checked',
+    fact_check_status: String(previewPostData.fact_check_status || '').trim(),
     last_fact_checked: previewPostData.last_fact_checked || '',
     featured_image: String(previewPostData.featured_image || '').trim(),
     featured_image_width: Number.parseInt(previewPostData.featured_image_width || '1400', 10) || 1400,
@@ -452,6 +452,17 @@ function renderAdminArticlePreview(req, res, previewPostData) {
   });
 }
 
+function decodeContentMd(body) {
+  if (body && typeof body.content_md_b64 === 'string' && body.content_md_b64.length > 0) {
+    try {
+      return Buffer.from(body.content_md_b64, 'base64').toString('utf8');
+    } catch {
+      // Fallback to raw content_md
+    }
+  }
+  return String((body && body.content_md) || '');
+}
+
 router.post('/posts/preview', verifyCsrf, (req, res) => {
   const b = req.body || {};
   const parsedPublished = String(b.published_at || '').trim() ? new Date(String(b.published_at).trim()) : null;
@@ -465,7 +476,7 @@ router.post('/posts/preview', verifyCsrf, (req, res) => {
     subtitle: b.subtitle,
     slug: b.slug,
     excerpt: b.excerpt,
-    content_md: b.content_md,
+    content_md: decodeContentMd(b),
     category_id: b.category_id,
     author_id: b.author_id,
     status: ['published', 'draft', 'scheduled', 'in_review'].includes(b.status) ? b.status : 'draft',
@@ -539,7 +550,7 @@ router.get('/posts/:id/edit', (req, res) => {
   });
 });
 
-function extractPostPayload(body, existingId = null, currentUser = null) {
+function extractPostPayload(body, existingId = null, currentUser = null, existingPost = null) {
   const submitAction = String(body.submit_action || '').trim();
   let title = String(body.title || '').trim();
   if (submitAction === 'draft' && !title) {
@@ -547,7 +558,7 @@ function extractPostPayload(body, existingId = null, currentUser = null) {
   }
   const subtitle = String(body.subtitle || '').trim();
   const slug = generateUniquePostSlug(body.slug || title, existingId);
-  const contentMd = String(body.content_md || '');
+  const contentMd = decodeContentMd(body);
   const rendered = renderArticleContent(contentMd);
 
   let excerpt = String(body.excerpt || '').trim();
@@ -557,15 +568,6 @@ function extractPostPayload(body, existingId = null, currentUser = null) {
       .replace(/\s+/g, ' ')
       .trim()
       .slice(0, 180);
-  }
-
-  const publishedAtInput = String(body.published_at || '').trim();
-  let publishedAt = new Date().toISOString();
-  if (publishedAtInput) {
-    const parsed = new Date(publishedAtInput);
-    if (!Number.isNaN(parsed.getTime())) {
-      publishedAt = parsed.toISOString();
-    }
   }
 
   let status = ['published', 'draft', 'scheduled', 'in_review'].includes(body.status) ? body.status : 'draft';
@@ -578,6 +580,18 @@ function extractPostPayload(body, existingId = null, currentUser = null) {
       status = 'in_review';
     } else {
       status = 'published';
+    }
+  }
+
+  const publishedAtInput = String(body.published_at || '').trim();
+  let publishedAt = (existingPost && existingPost.status === 'published' && existingPost.published_at)
+    ? existingPost.published_at
+    : new Date().toISOString();
+
+  if (status === 'scheduled' && publishedAtInput) {
+    const parsed = new Date(publishedAtInput);
+    if (!Number.isNaN(parsed.getTime())) {
+      publishedAt = parsed.toISOString();
     }
   }
 
@@ -626,7 +640,7 @@ function extractPostPayload(body, existingId = null, currentUser = null) {
     robots: String(body.robots || 'index, follow').trim() || 'index, follow',
     key_takeaways_json: JSON.stringify(parseTakeaways(body.key_takeaways_text)),
     whats_new: String(body.whats_new || '').trim(),
-    fact_check_status: String(body.fact_check_status || 'Fact-Checked').trim(),
+    fact_check_status: String(body.fact_check_status || '').trim(),
     last_fact_checked: String(body.last_fact_checked || '').trim(),
     official_sources_json: JSON.stringify(parseSources(body.official_sources_text)),
     corrections_json: JSON.stringify(parseCorrections(body.corrections_text)),
@@ -706,7 +720,7 @@ router.post('/posts/:id', verifyCsrf, async (req, res) => {
   const existing = db.prepare('SELECT * FROM posts WHERE id = ?').get(id);
   if (!existing) return res.redirect('/admin/posts');
 
-  const payload = extractPostPayload(req.body, id, req.user);
+  const payload = extractPostPayload(req.body, id, req.user, existing);
   if (!payload.title) {
     const mediaLibrary = db.prepare('SELECT * FROM media ORDER BY created_at DESC LIMIT 40').all();
     return res.status(400).render('admin/post-editor', {
@@ -813,7 +827,7 @@ router.post('/api/posts/:id/autosave', verifyCsrf, (req, res) => {
 
   const title = String(req.body.title || '').trim();
   const subtitle = String(req.body.subtitle || '').trim();
-  const contentMd = String(req.body.content_md || '');
+  const contentMd = decodeContentMd(req.body);
   if (!title) return res.json({ ok: false, message: 'Title empty' });
 
   const rendered = renderArticleContent(contentMd);

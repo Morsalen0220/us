@@ -57,9 +57,9 @@
             <% } %>
             <span>•</span>
             <span>Published <time datetime="<%= post.published_at %>"><%= formatDate(post.published_at) %></time></span>
-            <% if (post.last_fact_checked) { %>
+            <% if (post.fact_check_status && post.last_fact_checked) { %>
             <span>•</span>
-            <span>Last Fact-Checked: <strong><%= post.last_fact_checked %></strong></span>
+            <span>Last Checked: <strong><%= post.last_fact_checked %></strong></span>
             <% } %>
             <span>•</span>
             <span><%= post.reading_time %> min read (<%= post.word_count %> words)</span>
@@ -72,6 +72,7 @@
           </div>
           <% if (typeof shareLinks !== 'undefined' && shareLinks) { %>
           <div class="share-social-strip" aria-label="Share on social platforms">
+            <a class="share-btn" href="<%= shareLinks.facebook %>" target="_blank" rel="noopener noreferrer">Facebook</a>
             <a class="share-btn" href="<%= shareLinks.x %>" target="_blank" rel="noopener noreferrer">X / Twitter</a>
             <a class="share-btn" href="<%= shareLinks.bluesky %>" target="_blank" rel="noopener noreferrer">Bluesky</a>
             <a class="share-btn" href="<%= shareLinks.reddit %>" target="_blank" rel="noopener noreferrer">Reddit</a>
@@ -148,20 +149,20 @@
       </div>
 
       <% if (typeof isPreview === 'undefined' || !isPreview) { %>
-      <!-- AI Article Assistant (Grounded strictly in verified article content) -->
+      <!-- AI Article Assistant -->
       <section class="ai-assistant-box" aria-label="AI Article Assistant">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;">
           <h3 style="margin:0;font-size:1.02rem;display:flex;align-items:center;gap:0.4rem;"><%- icon('bot', 18) %> AI Article Assistant</h3>
-          <span style="font-size:0.75rem;color:var(--text-soft);font-weight:600;">Answers strictly from this verified article</span>
+          <span style="font-size:0.75rem;color:var(--text-soft);font-weight:600;">Ask anything about this article or topic</span>
         </div>
         <div class="ai-quick-chips">
-          <button type="button" class="ai-chip-btn" data-ai-prompt="Summarize the key takeaways">Summarize Key Takeaways</button>
-          <button type="button" class="ai-chip-btn" data-ai-prompt="What are the official sources?">Official Sources</button>
-          <button type="button" class="ai-chip-btn" data-ai-prompt="What is new or updated in this story?">What's New?</button>
+          <button type="button" class="ai-chip-btn" data-ai-prompt="Give me a clear summary of the key points in this article">Summarize Key Points</button>
+          <button type="button" class="ai-chip-btn" data-ai-prompt="Explain this topic in simple, beginner-friendly terms">Explain Simply</button>
+          <button type="button" class="ai-chip-btn" data-ai-prompt="What practical steps or takeaways should I follow from this article?">Actionable Steps</button>
         </div>
         <form id="aiAssistantForm" data-post-id="<%= post.id %>" style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-          <input id="aiQuestionInput" type="text" class="search-input" style="padding:0.55rem 0.85rem;font-size:0.9rem;" placeholder="Ask a question about facts inside this article..." required>
-          <button type="submit" class="btn-primary">Ask Assistant</button>
+          <input id="aiQuestionInput" type="text" class="search-input" style="padding:0.55rem 0.85rem;font-size:0.9rem;" placeholder="Ask anything about this article, related terms, or follow-up questions..." required>
+          <button type="submit" class="btn-primary">Ask AI</button>
         </form>
         <div id="aiAnswerBox" class="ai-answer-box" aria-live="polite"></div>
       </section>

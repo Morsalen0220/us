@@ -958,3 +958,69 @@ table.admin-table th {
   place-items: center;
   flex-shrink: 0;
 }
+
+.editor-collapsible {
+  padding: 0;
+  overflow: hidden;
+}
+
+.editor-collapsible-summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.95rem 1.2rem;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 700;
+  font-size: 1.02rem;
+  color: var(--text);
+  background: var(--surface);
+  transition: background 0.14s ease;
+}
+
+.editor-collapsible-summary::-webkit-details-marker {
+  display: none;
+}
+
+.editor-collapsible-summary:hover {
+  background: #f8fafc;
+}
+
+.editor-collapsible-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.editor-collapsible-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.editor-collapsible-meta::after {
+  content: '▸';
+  display: inline-block;
+  font-size: 0.95rem;
+  color: #475569;
+  transition: transform 0.16s ease;
+}
+
+.editor-collapsible[open] > .editor-collapsible-summary {
+  border-bottom: 1px solid var(--border);
+  background: #f8fafc;
+}
+
+.editor-collapsible[open] .editor-collapsible-meta::after {
+  transform: rotate(90deg);
+}
+
+.editor-collapsible-body {
+  padding: 1.15rem 1.2rem 1.2rem;
+}

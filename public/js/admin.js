@@ -281,10 +281,11 @@
             if (featPreviewWrap) featPreviewWrap.style.display = 'block';
             updateSeoPreviewAndScore();
           } else if (contentEl) {
-            const descAttr = d.description ? ` aria-description="${d.description}" data-description="${d.description}"` : '';
-            const fig = `\n<figure>\n  <img src="${d.url}" alt="${d.alt || d.title}" title="${d.title || d.alt}"${descAttr} width="${d.width}" height="${d.height}" loading="lazy">\n  <figcaption>${d.caption || d.title || d.alt}</figcaption>\n</figure>\n`;
+            const alt = String(d.alt || d.title || 'Article image').replace(/[\r\n\[\]]+/g, ' ').trim();
+            const cap = String(d.caption || d.title || d.alt || '').replace(/[\r\n"]+/g, ' ').trim();
+            const mdImg = cap ? `\n![${alt}](${d.url} "${cap}")\n` : `\n![${alt}](${d.url})\n`;
             const pos = contentEl.selectionStart || contentEl.value.length;
-            contentEl.setRangeText(fig, pos, pos, 'end');
+            contentEl.setRangeText(mdImg, pos, pos, 'end');
             updateSeoPreviewAndScore();
           }
           if (modal) modal.classList.remove('open');
@@ -407,23 +408,204 @@
       validateVideoUrlInput();
     }
 
-    // Dynamic Primary Publish CTA Label
+    // Dynamic Primary Publish CTA Label & Conditional Schedule Date Picker
     const postStatusEl = document.getElementById('postStatus');
     const primaryPublishBtn = document.getElementById('primaryPublishBtn');
-    if (postStatusEl && primaryPublishBtn && primaryPublishBtn.value === 'publish') {
-      const syncPublishLabel = () => {
+    const scheduleDateField = document.getElementById('scheduleDateField');
+    const publishedAtInput = document.getElementById('publishedAt');
+    if (postStatusEl) {
+      const syncStatusUi = () => {
         const s = postStatusEl.value;
-        const iconSvg = '<svg class="lucide lucide-send" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg> ';
-        if (s === 'scheduled') {
-          primaryPublishBtn.innerHTML = iconSvg + 'Schedule Article';
-        } else if (s === 'in_review') {
-          primaryPublishBtn.innerHTML = iconSvg + 'Submit for Review';
-        } else {
-          primaryPublishBtn.innerHTML = iconSvg + 'Publish Article';
+        if (scheduleDateField) {
+          const isScheduled = s === 'scheduled';
+          scheduleDateField.style.display = isScheduled ? 'block' : 'none';
+          if (isScheduled && publishedAtInput && !publishedAtInput.value) {
+            const oneHourAhead = new Date(Date.now() + 60 * 60 * 1000).toISOString().slice(0, 16);
+            publishedAtInput.value = oneHourAhead;
+          }
+        }
+        if (primaryPublishBtn && primaryPublishBtn.value === 'publish') {
+          const iconSvg = '<svg class="lucide lucide-send" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg> ';
+          if (s === 'scheduled') {
+            primaryPublishBtn.innerHTML = iconSvg + 'Schedule Article';
+          } else if (s === 'in_review') {
+            primaryPublishBtn.innerHTML = iconSvg + 'Submit for Review';
+          } else {
+            primaryPublishBtn.innerHTML = iconSvg + 'Publish Article';
+          }
         }
       };
-      postStatusEl.addEventListener('change', syncPublishLabel);
-      syncPublishLabel();
+      postStatusEl.addEventListener('change', syncStatusUi);
+      syncStatusUi();
+    }
+
+    // JSON Article Importer (100% client-side — zero server or public site overhead)
+    const jsonImportBtn = document.getElementById('jsonImportBtn');
+    const jsonImportInput = document.getElementById('jsonImportInput');
+    const jsonImportStatus = document.getElementById('jsonImportStatus');
+
+    function showJsonStatus(message, isError = false) {
+      if (!jsonImportStatus) return;
+      jsonImportStatus.textContent = message;
+      jsonImportStatus.className = isError ? 'alert alert-error' : 'alert alert-success';
+      jsonImportStatus.style.display = 'block';
+    }
+
+    function pickFirst(obj, keys) {
+      for (const k of keys) {
+        if (obj && Object.prototype.hasOwnProperty.call(obj, k) && obj[k] !== null && obj[k] !== undefined) {
+          const val = obj[k];
+          if (typeof val === 'string' && val.trim() === '') continue;
+          if (Array.isArray(val) && val.length === 0) continue;
+          return val;
+        }
+      }
+      return undefined;
+    }
+
+    function formatLinesList(val, pairKeys) {
+      if (typeof val === 'string') return val.trim();
+      if (!Array.isArray(val)) return '';
+      return val
+        .map((item) => {
+          if (typeof item === 'string') return item.trim();
+          if (item && typeof item === 'object' && pairKeys) {
+            const left = String(item[pairKeys[0]] || '').trim();
+            const right = String(item[pairKeys[1]] || '').trim();
+            if (left && right) return `${left} | ${right}`;
+            return left || right;
+          }
+          return '';
+        })
+        .filter(Boolean)
+        .join('\n');
+    }
+
+    if (jsonImportBtn && jsonImportInput) {
+      jsonImportBtn.addEventListener('click', () => jsonImportInput.click());
+      jsonImportInput.addEventListener('change', async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+          const rawText = await file.text();
+          const parsed = JSON.parse(rawText);
+          const data = Array.isArray(parsed) ? parsed[0] : (parsed && typeof parsed.article === 'object' ? parsed.article : parsed);
+          if (!data || typeof data !== 'object') {
+            throw new Error('JSON must be an object containing article fields.');
+          }
+
+          let filledCount = 0;
+          const setVal = (el, val) => {
+            if (!el || val === undefined) return;
+            const str = String(val).trim();
+            if (!str) return;
+            el.value = str;
+            filledCount += 1;
+          };
+
+          const importedTitle = pickFirst(data, ['title', 'headline', 'h1']);
+          const importedSubtitle = pickFirst(data, ['subtitle', 'deck', 'sub_headline']);
+          const importedSlug = pickFirst(data, ['slug', 'url_slug', 'permalink']);
+          const importedExcerpt = pickFirst(data, ['excerpt', 'short_excerpt', 'summary']);
+          const importedBody = pickFirst(data, ['content_md', 'content', 'body', 'article_body', 'markdown']);
+
+          setVal(titleEl, importedTitle);
+          setVal(subtitleEl, importedSubtitle);
+          if (importedSlug !== undefined) {
+            setVal(slugEl, slugify(importedSlug));
+            slugTouched = true;
+          } else if (importedTitle !== undefined && slugEl && !slugEl.value.trim()) {
+            slugEl.value = slugify(importedTitle);
+          }
+          setVal(excerptEl, importedExcerpt);
+          setVal(contentEl, importedBody);
+
+          // SEO fields
+          setVal(focusKwEl, pickFirst(data, ['focus_keyword', 'primary_keyword']));
+          setVal(metaTitleEl, pickFirst(data, ['meta_title', 'seo_title']));
+          setVal(metaSubtitleEl, pickFirst(data, ['meta_subtitle', 'seo_subtitle']));
+          setVal(metaDescEl, pickFirst(data, ['meta_description', 'seo_description']));
+          const importedTags = pickFirst(data, ['meta_tags', 'tags', 'keywords']);
+          if (importedTags !== undefined) {
+            const tagsStr = Array.isArray(importedTags)
+              ? importedTags.map((t) => String(t).trim()).filter(Boolean).join(', ')
+              : String(importedTags).trim();
+            setVal(metaTagsEl, tagsStr);
+          }
+          setVal(document.getElementById('canonicalUrl'), pickFirst(data, ['canonical_url']));
+
+          // Optional Verification / Takeaways / Corrections (Category & Official Sources are always chosen manually)
+          const importedTakeaways = pickFirst(data, ['key_takeaways', 'key_takeaways_text', 'takeaways']);
+          if (importedTakeaways !== undefined) {
+            setVal(document.getElementById('keyTakeaways'), formatLinesList(importedTakeaways));
+          }
+          setVal(document.getElementById('whatsNew'), pickFirst(data, ['whats_new']));
+          const importedFactCheck = pickFirst(data, ['fact_check_status']);
+          const factCheckEl = document.getElementById('factCheckStatus');
+          if (importedFactCheck !== undefined && factCheckEl) {
+            const matchOpt = Array.from(factCheckEl.options).find((o) => o.value.toLowerCase() === String(importedFactCheck).trim().toLowerCase());
+            if (matchOpt) {
+              factCheckEl.value = matchOpt.value;
+              filledCount += 1;
+            }
+          }
+          setVal(document.getElementById('lastFactChecked'), pickFirst(data, ['last_fact_checked']));
+          const importedCorrections = pickFirst(data, ['corrections', 'corrections_text']);
+          if (importedCorrections !== undefined) {
+            setVal(document.getElementById('correctionsLog'), formatLinesList(importedCorrections, ['date', 'note']));
+          }
+
+          // Optional YouTube Video fields
+          setVal(videoUrlEl, pickFirst(data, ['video_url']));
+          setVal(document.getElementById('videoTitle'), pickFirst(data, ['video_title']));
+          setVal(document.getElementById('videoDuration'), pickFirst(data, ['video_duration']));
+          const shortCheck = postForm.querySelector('input[name="video_is_short"]');
+          if (shortCheck && data.video_is_short !== undefined) {
+            shortCheck.checked = Boolean(data.video_is_short);
+          }
+
+          // Optional Featured Image text metadata (image file itself is uploaded manually)
+          setVal(featTitleEl, pickFirst(data, ['featured_image_title']));
+          setVal(featAltEl, pickFirst(data, ['featured_image_alt']));
+          setVal(featCaptionEl, pickFirst(data, ['featured_image_caption']));
+          setVal(featDescEl, pickFirst(data, ['featured_image_description']));
+
+          updateSeoPreviewAndScore();
+          validateVideoUrlInput();
+          dirty = true;
+
+          if (filledCount === 0) {
+            showJsonStatus(`Loaded "${file.name}", but no matching article fields were found. Check the JSON key names.`, true);
+          } else {
+            showJsonStatus(`Imported ${filledCount} field${filledCount === 1 ? '' : 's'} from "${file.name}"! Review the text, upload your Featured Image, then Save Draft or Publish.`);
+          }
+        } catch (err) {
+          showJsonStatus(`Invalid JSON file: ${err.message}`, true);
+        } finally {
+          jsonImportInput.value = '';
+        }
+      });
+    }
+
+    // Safe UTF-8 Base64 transport for article body so host WAF / ModSecurity never blocks HTML/Markdown snippets with 403
+    function encodeUtf8Base64(str) {
+      const bytes = new TextEncoder().encode(String(str || ''));
+      let binary = '';
+      for (let i = 0; i < bytes.length; i += 0x8000) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+      }
+      return btoa(binary);
+    }
+
+    const contentB64El = document.getElementById('postContentB64');
+    if (contentEl && contentB64El) {
+      postForm.addEventListener('submit', () => {
+        contentB64El.value = encodeUtf8Base64(contentEl.value);
+        contentEl.disabled = true;
+        setTimeout(() => {
+          contentEl.disabled = false;
+        }, 0);
+      });
     }
 
     // Draft Autosave (LocalStorage + Server API for existing articles)
@@ -455,7 +637,7 @@
             body: JSON.stringify({
               title: titleEl?.value || '',
               subtitle: subtitleEl?.value || '',
-              content_md: contentEl?.value || ''
+              content_md_b64: encodeUtf8Base64(contentEl?.value || '')
             })
           });
           const data = await res.json();

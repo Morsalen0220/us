@@ -245,17 +245,56 @@
     });
   }
 
-  // Grounded AI Article Assistant
+  // AI Article Assistant
   const aiForm = document.getElementById('aiAssistantForm');
   if (aiForm) {
     const postId = aiForm.dataset.postId;
     const inputEl = document.getElementById('aiQuestionInput');
     const answerEl = document.getElementById('aiAnswerBox');
 
+    function formatAiAnswerHtml(text) {
+      const escaped = String(text || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+      const lines = escaped.split(/\r?\n/);
+      let html = '';
+      let inList = false;
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line) {
+          if (inList) {
+            html += '</ul>';
+            inList = false;
+          }
+          continue;
+        }
+        const formatted = line
+          .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+          .replace(/`([^`]+)`/g, '<code>$1</code>');
+        const bulletMatch = formatted.match(/^([-*•]|\d+\.)\s+(.+)/);
+        if (bulletMatch) {
+          if (!inList) {
+            html += '<ul style="margin:0.45rem 0 0.55rem;padding-left:1.2rem;">';
+            inList = true;
+          }
+          html += `<li style="margin-bottom:0.25rem;">${bulletMatch[2]}</li>`;
+        } else {
+          if (inList) {
+            html += '</ul>';
+            inList = false;
+          }
+          html += `<p style="margin:0 0 0.5rem;">${formatted}</p>`;
+        }
+      }
+      if (inList) html += '</ul>';
+      return html || '<p style="margin:0;">No response generated.</p>';
+    }
+
     async function askAi(q) {
       if (!q.trim() || !answerEl) return;
       answerEl.style.display = 'block';
-      answerEl.textContent = 'Reading verified article context...';
+      answerEl.innerHTML = '<p style="margin:0;color:var(--text-soft);">Thinking...</p>';
       try {
         const res = await fetch(`/api/articles/${postId}/ask`, {
           method: 'POST',
@@ -267,10 +306,7 @@
           answerEl.textContent = data.error || 'Could not process question.';
           return;
         }
-        const cites = Array.isArray(data.citations) && data.citations.length
-          ? `\n\nSources in article: ${data.citations.map((c) => c.heading).join(' • ')}`
-          : '';
-        answerEl.textContent = `${data.answer}${cites}`;
+        answerEl.innerHTML = formatAiAnswerHtml(data.answer);
       } catch {
         answerEl.textContent = 'Assistant unavailable right now.';
       }

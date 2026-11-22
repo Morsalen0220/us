@@ -85,6 +85,7 @@ export function buildPlatformShareLinks(post, siteUrl = 'https://techhavenus.com
   const shortText = `${title}\n\n${post.subtitle || post.excerpt || ''}`.trim().slice(0, 220);
 
   return {
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${canonicalUrl}?utm_source=facebook`)}`,
     x: `https://twitter.com/intent/tweet?text=${encodeURIComponent(`${title} ${tags}`)}&url=${encodeURIComponent(`${canonicalUrl}?utm_source=x`)}`,
     bluesky: `https://bsky.app/intent/compose?text=${encodeURIComponent(`${title}\n\n${canonicalUrl}?utm_source=bluesky`)}`,
     reddit: `https://www.reddit.com/submit?url=${encodeURIComponent(`${canonicalUrl}?utm_source=reddit`)}&title=${encodeURIComponent(title)}`,

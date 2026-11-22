@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex, nofollow">
   <meta name="csrf-token" content="<%= csrfToken %>">
   <title><%= post.id ? 'Edit Article' : 'New Article' %> — TechHaven CMS</title>
-  <link rel="stylesheet" href="/css/admin.css">
+  <link rel="stylesheet" href="/css/admin.css?v=25">
 </head>
 <body>
 <div class="admin-shell">
@@ -25,6 +25,8 @@
         </div>
       </div>
       <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+        <input id="jsonImportInput" type="file" accept=".json,application/json" style="display:none;">
+        <button type="button" id="jsonImportBtn" class="btn btn-outline" title="Upload a .json file to auto-fill article text fields"><%- icon('upload', 15) %> Import JSON</button>
         <button type="submit" form="postEditorForm" name="submit_action" value="draft" formnovalidate class="btn btn-outline"><%- icon('file-edit', 15) %> Save Draft</button>
         <button type="submit" form="postEditorForm" formaction="/admin/posts/preview" formtarget="_blank" formnovalidate class="btn btn-outline"><%- icon('eye', 15) %> Preview</button>
         <% if (post.id && post.status === 'published') { %>
@@ -33,6 +35,8 @@
         <a href="/admin/posts" class="btn btn-outline">&larr; All Articles</a>
       </div>
     </div>
+
+    <div id="jsonImportStatus" class="alert" style="display:none;"></div>
 
     <% if (saved === 'draft') { %>
     <div class="alert alert-success">Draft saved! This article is hidden from the public site. Click <strong>Preview</strong> to inspect it, resume editing anytime from All Articles &rarr; Drafts, or click <strong>Publish Article</strong> when ready.</div>
@@ -48,6 +52,7 @@
     <form id="postEditorForm" action="<%= post.id ? '/admin/posts/' + post.id : '/admin/posts' %>" method="POST" data-site-url="<%= siteUrl %>" data-post-id="<%= post.id || '' %>">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <input type="hidden" name="preview_post_id" value="<%= post.id || '' %>">
+      <input type="hidden" id="postContentB64" name="content_md_b64" value="">
 
       <div class="editor-grid">
         <div>
@@ -97,74 +102,82 @@
             </div>
           </section>
 
-          <!-- Article 2.0 Journalism & Verification Metadata -->
-          <section class="card">
-            <h2 style="margin:0 0 0.9rem;font-size:1.1rem;"><%- icon('newspaper', 18) %> Verification, Key Takeaways, Official Sources &amp; Corrections</h2>
-
-            <div class="field">
-              <label for="keyTakeaways">Key Takeaways (one bullet point per line — 3 to 5 points)</label>
-              <textarea id="keyTakeaways" name="key_takeaways_text" rows="4" placeholder="Point 1&#10;Point 2&#10;Point 3"><%= post.key_takeaways_text || '' %></textarea>
-            </div>
-
-            <div class="field">
-              <label for="whatsNew">What's New / Latest Update Callout (Optional)</label>
-              <input id="whatsNew" type="text" name="whats_new" value="<%= post.whats_new || '' %>" placeholder="e.g., Updated Nov 2026 with official Rockstar patch verification.">
-            </div>
-
-            <div class="admin-grid-2">
+          <!-- Article 2.0 Journalism & Verification Metadata (Collapsible) -->
+          <details class="card editor-collapsible">
+            <summary class="editor-collapsible-summary">
+              <span class="editor-collapsible-title"><%- icon('newspaper', 18) %> Verification, Key Takeaways, Official Sources &amp; Corrections</span>
+              <span class="editor-collapsible-meta">Optional &bull; Click to expand</span>
+            </summary>
+            <div class="editor-collapsible-body">
               <div class="field">
-                <label for="factCheckStatus">Editorial Review Label</label>
-                <select id="factCheckStatus" name="fact_check_status">
-                  <option value="Editorial Review" <%= post.fact_check_status === 'Editorial Review' ? 'selected' : '' %>>Editorial Review</option>
-                  <option value="Fact-Checked" <%= post.fact_check_status === 'Fact-Checked' ? 'selected' : '' %>>Fact-Checked</option>
-                  <option value="Research & Analysis" <%= post.fact_check_status === 'Research & Analysis' ? 'selected' : '' %>>Research &amp; Analysis</option>
-                  <option value="Developing Story" <%= post.fact_check_status === 'Developing Story' ? 'selected' : '' %>>Developing Story</option>
-                  <option value="" <%= !post.fact_check_status ? 'selected' : '' %>>None (Hide Badge)</option>
-                </select>
+                <label for="keyTakeaways">Key Takeaways (one bullet point per line — 3 to 5 points)</label>
+                <textarea id="keyTakeaways" name="key_takeaways_text" rows="4" placeholder="Point 1&#10;Point 2&#10;Point 3"><%= post.key_takeaways_text || '' %></textarea>
               </div>
+
               <div class="field">
-                <label for="lastFactChecked">Last Fact-Checked Date</label>
-                <input id="lastFactChecked" type="text" name="last_fact_checked" value="<%= post.last_fact_checked || '' %>" placeholder="YYYY-MM-DD">
+                <label for="whatsNew">What's New / Latest Update Callout (Optional)</label>
+                <input id="whatsNew" type="text" name="whats_new" value="<%= post.whats_new || '' %>" placeholder="e.g., Updated Nov 2026 with official Rockstar patch verification.">
               </div>
-            </div>
 
-            <div class="field">
-              <label for="officialSources">Official Sources (one per line: <code>Label | https://url</code>)</label>
-              <textarea id="officialSources" name="official_sources_text" rows="3" placeholder="Rockstar Newswire | https://www.rockstargames.com/newswire"><%= post.official_sources_text || '' %></textarea>
-            </div>
-
-            <div class="field" style="margin-bottom:0;">
-              <label for="correctionsLog">Correction History (one per line: <code>YYYY-MM-DD | Note</code>)</label>
-              <textarea id="correctionsLog" name="corrections_text" rows="2" placeholder="2026-11-18 | Clarified benchmark driver version"><%= post.corrections_text || '' %></textarea>
-            </div>
-          </section>
-
-          <!-- YouTube / Shorts Video Review Metadata -->
-          <section class="card">
-            <h2 style="margin:0 0 0.9rem;font-size:1.1rem;"><%- icon('clapperboard', 18) %> YouTube / Shorts Video Review &amp; VideoObject Schema</h2>
-
-            <div class="field">
-              <label for="videoUrl">YouTube Watch, Embed, or Shorts URL (Optional)</label>
-              <input id="videoUrl" type="text" inputmode="url" name="video_url" value="<%= post.video_url || '' %>" placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/... or https://www.youtube.com/shorts/...">
-              <div id="videoUrlHint" style="font-size:0.76rem;margin-top:0.35rem;color:#64748b;">Supports youtube.com/watch?v=..., youtu.be/..., /shorts/..., or /embed/...</div>
-            </div>
-
-            <div class="admin-split-2">
-              <div class="field">
-                <label for="videoTitle">Video Review Title (Optional — defaults to Article Title)</label>
-                <input id="videoTitle" type="text" name="video_title" value="<%= post.video_title || '' %>" placeholder="e.g., RTX 50 Series Benchmarks Tested in 4K">
+              <div class="admin-grid-2">
+                <div class="field">
+                  <label for="factCheckStatus">Editorial / Fact-Check Badge (Hidden by Default)</label>
+                  <select id="factCheckStatus" name="fact_check_status">
+                    <option value="" <%= !post.fact_check_status ? 'selected' : '' %>>None (Hidden — Default)</option>
+                    <option value="Editorial Review" <%= post.fact_check_status === 'Editorial Review' ? 'selected' : '' %>>Editorial Review</option>
+                    <option value="Fact-Checked" <%= post.fact_check_status === 'Fact-Checked' ? 'selected' : '' %>>Fact-Checked</option>
+                    <option value="Research & Analysis" <%= post.fact_check_status === 'Research & Analysis' ? 'selected' : '' %>>Research &amp; Analysis</option>
+                    <option value="Developing Story" <%= post.fact_check_status === 'Developing Story' ? 'selected' : '' %>>Developing Story</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="lastFactChecked">Last Checked Date (Optional)</label>
+                  <input id="lastFactChecked" type="text" name="last_fact_checked" value="<%= post.last_fact_checked || '' %>" placeholder="YYYY-MM-DD">
+                </div>
               </div>
+
               <div class="field">
-                <label for="videoDuration">Duration (ISO or mm:ss)</label>
-                <input id="videoDuration" type="text" name="video_duration" value="<%= post.video_duration || '' %>" placeholder="PT8M42S or 8:42">
+                <label for="officialSources">Official Sources (one per line: <code>Label | https://url</code>)</label>
+                <textarea id="officialSources" name="official_sources_text" rows="3" placeholder="Rockstar Newswire | https://www.rockstargames.com/newswire"><%= post.official_sources_text || '' %></textarea>
+              </div>
+
+              <div class="field" style="margin-bottom:0;">
+                <label for="correctionsLog">Correction History (one per line: <code>YYYY-MM-DD | Note</code>)</label>
+                <textarea id="correctionsLog" name="corrections_text" rows="2" placeholder="2026-11-18 | Clarified benchmark driver version"><%= post.corrections_text || '' %></textarea>
               </div>
             </div>
+          </details>
 
-            <label style="display:flex;justify-content:flex-start;align-items:center;gap:0.5rem;font-weight:600;cursor:pointer;">
-              <input type="checkbox" name="video_is_short" value="1" <%= post.video_is_short ? 'checked' : '' %>>
-              <%- icon('smartphone', 16) %> Vertical 9:16 YouTube Short (also listed in Shorts tab at /videos)
-            </label>
-          </section>
+          <!-- YouTube / Shorts Video Review Metadata (Collapsible) -->
+          <details class="card editor-collapsible">
+            <summary class="editor-collapsible-summary">
+              <span class="editor-collapsible-title"><%- icon('clapperboard', 18) %> YouTube / Shorts Video Review &amp; VideoObject Schema</span>
+              <span class="editor-collapsible-meta">Optional &bull; Click to expand</span>
+            </summary>
+            <div class="editor-collapsible-body">
+              <div class="field">
+                <label for="videoUrl">YouTube Watch, Embed, or Shorts URL (Optional)</label>
+                <input id="videoUrl" type="text" inputmode="url" name="video_url" value="<%= post.video_url || '' %>" placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/... or https://www.youtube.com/shorts/...">
+                <div id="videoUrlHint" style="font-size:0.76rem;margin-top:0.35rem;color:#64748b;">Supports youtube.com/watch?v=..., youtu.be/..., /shorts/..., or /embed/...</div>
+              </div>
+
+              <div class="admin-split-2">
+                <div class="field">
+                  <label for="videoTitle">Video Review Title (Optional — defaults to Article Title)</label>
+                  <input id="videoTitle" type="text" name="video_title" value="<%= post.video_title || '' %>" placeholder="e.g., RTX 50 Series Benchmarks Tested in 4K">
+                </div>
+                <div class="field">
+                  <label for="videoDuration">Duration (ISO or mm:ss)</label>
+                  <input id="videoDuration" type="text" name="video_duration" value="<%= post.video_duration || '' %>" placeholder="PT8M42S or 8:42">
+                </div>
+              </div>
+
+              <label style="display:flex;justify-content:flex-start;align-items:center;gap:0.5rem;font-weight:600;cursor:pointer;">
+                <input type="checkbox" name="video_is_short" value="1" <%= post.video_is_short ? 'checked' : '' %>>
+                <%- icon('smartphone', 16) %> Vertical 9:16 YouTube Short (also listed in Shorts tab at /videos)
+              </label>
+            </div>
+          </details>
 
           <!-- Complete SEO Optimization Panel -->
           <section class="card">
@@ -272,35 +285,27 @@
               </select>
             </div>
 
-            <div class="field">
-              <label for="publishedAt">Publish / Schedule Timestamp (UTC)</label>
-              <input id="publishedAt" type="datetime-local" name="published_at" value="<%= post.published_at %>">
+            <div id="scheduleDateField" class="field" style="display:<%= post.status === 'scheduled' ? 'block' : 'none' %>;">
+              <label for="publishedAt">Schedule Timestamp (UTC)</label>
+              <input id="publishedAt" type="datetime-local" name="published_at" value="<%= post.status === 'scheduled' ? (post.published_at || '') : '' %>">
             </div>
 
             <div class="field" style="display:flex;flex-direction:column;gap:0.45rem;">
               <label style="justify-content:flex-start;gap:0.5rem;font-weight:600;cursor:pointer;">
-                <input type="checkbox" name="is_breaking" value="1" <%= post.is_breaking ? 'checked' : '' %>>
-                <%- icon('radio', 15) %> Pin to Breaking News Bar
-              </label>
-              <label style="justify-content:flex-start;gap:0.5rem;font-weight:600;cursor:pointer;">
                 <input type="checkbox" name="is_featured" value="1" <%= post.is_featured ? 'checked' : '' %>>
                 Feature in Homepage Hero
-              </label>
-              <label style="justify-content:flex-start;gap:0.5rem;font-weight:600;cursor:pointer;">
-                <input type="checkbox" name="is_editors_pick" value="1" <%= post.is_editors_pick ? 'checked' : '' %>>
-                <%- icon('star', 15) %> Mark as Editor’s Pick
               </label>
               <label style="justify-content:flex-start;gap:0.5rem;font-weight:600;cursor:pointer;">
                 <input type="checkbox" name="is_trending" value="1" <%= post.is_trending ? 'checked' : '' %>>
                 Pin to Trending Now
               </label>
               <label style="justify-content:flex-start;gap:0.5rem;font-weight:600;cursor:pointer;">
-                <input type="checkbox" name="queue_social" value="1">
-                <%- icon('megaphone', 15) %> Auto-Generate Social Queue (X, Bluesky, Reddit, LinkedIn, HN)
+                <input type="checkbox" name="is_editors_pick" value="1" <%= post.is_editors_pick ? 'checked' : '' %>>
+                <%- icon('star', 15) %> Mark as Editor’s Pick
               </label>
               <label style="justify-content:flex-start;gap:0.5rem;font-weight:600;cursor:pointer;">
-                <input type="checkbox" name="send_push" value="1">
-                <%- icon('bell', 15) %> Broadcast Breaking Web Push Alert on Publish
+                <input type="checkbox" name="queue_social" value="1" <%= !post.id ? 'checked' : '' %>>
+                <%- icon('megaphone', 15) %> Auto-Generate Social Queue (X, Bluesky, Reddit, LinkedIn, HN)
               </label>
             </div>
 
@@ -440,6 +445,6 @@
   </div>
 </div>
 
-<script src="/js/admin.js"></script>
+<script src="/js/admin.js?v=27"></script>
 </body>
 </html>

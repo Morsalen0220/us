@@ -98,13 +98,18 @@ export function renderArticleContent(markdownText = '') {
     `<button type="button" class="yt-play-btn" aria-label="Play Video">${renderIcon('play', 22)}</button>`
   );
 
-  const plainBody = stripTags(htmlWithPlayIcons);
+  const htmlWithFigures = htmlWithPlayIcons.replace(
+    /<p>\s*(<img\b[^>]*\btitle="([^"]+)"[^>]*>)\s*<\/p>/gi,
+    '<figure>$1<figcaption>$2</figcaption></figure>'
+  );
+
+  const plainBody = stripTags(htmlWithFigures);
   const words = plainBody ? plainBody.split(/\s+/).filter(Boolean) : [];
   const wordCount = words.length;
   const readingTime = Math.max(1, Math.ceil(wordCount / 220));
 
   return {
-    html: htmlWithPlayIcons,
+    html: htmlWithFigures,
     toc,
     wordCount,
     readingTime
