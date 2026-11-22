@@ -439,6 +439,8 @@
       syncStatusUi();
     }
 
+    let dirty = false;
+
     // JSON Article Importer (100% client-side — zero server or public site overhead)
     const jsonImportBtn = document.getElementById('jsonImportBtn');
     const jsonImportInput = document.getElementById('jsonImportInput');
@@ -587,32 +589,10 @@
       });
     }
 
-    // Safe UTF-8 Base64 transport for article body so host WAF / ModSecurity never blocks HTML/Markdown snippets with 403
-    function encodeUtf8Base64(str) {
-      const bytes = new TextEncoder().encode(String(str || ''));
-      let binary = '';
-      for (let i = 0; i < bytes.length; i += 0x8000) {
-        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
-      }
-      return btoa(binary);
-    }
-
-    const contentB64El = document.getElementById('postContentB64');
-    if (contentEl && contentB64El) {
-      postForm.addEventListener('submit', () => {
-        contentB64El.value = encodeUtf8Base64(contentEl.value);
-        contentEl.disabled = true;
-        setTimeout(() => {
-          contentEl.disabled = false;
-        }, 0);
-      });
-    }
-
     // Draft Autosave (LocalStorage + Server API for existing articles)
     const autosaveLabel = document.getElementById('autosaveStatus');
     const postId = postForm.dataset.postId;
     const localKey = `th_draft_${postId || 'new'}`;
-    let dirty = false;
     [titleEl, subtitleEl, contentEl].filter(Boolean).forEach((el) => {
       el.addEventListener('input', () => {
         dirty = true;
@@ -637,7 +617,7 @@
             body: JSON.stringify({
               title: titleEl?.value || '',
               subtitle: subtitleEl?.value || '',
-              content_md_b64: encodeUtf8Base64(contentEl?.value || '')
+              content_md: contentEl?.value || ''
             })
           });
           const data = await res.json();

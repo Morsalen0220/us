@@ -52,7 +52,6 @@
     <form id="postEditorForm" action="<%= post.id ? '/admin/posts/' + post.id : '/admin/posts' %>" method="POST" data-site-url="<%= siteUrl %>" data-post-id="<%= post.id || '' %>">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <input type="hidden" name="preview_post_id" value="<%= post.id || '' %>">
-      <input type="hidden" id="postContentB64" name="content_md_b64" value="">
 
       <div class="editor-grid">
         <div>
@@ -445,6 +444,6 @@
   </div>
 </div>
 
-<script src="/js/admin.js?v=27"></script>
+<script src="/js/admin.js?v=28"></script>
 </body>
 </html>
