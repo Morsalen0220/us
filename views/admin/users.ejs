@@ -84,17 +84,40 @@
                 </td>
                 <td><%= u.post_count %></td>
                 <td>
-                  <form action="/admin/users/<%= u.id %>/role" method="POST" style="display:flex;gap:0.35rem;flex-wrap:wrap;">
-                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                    <select name="role" style="padding:0.25rem;border:1px solid #cbd5e1;border-radius:6px;font-size:0.8rem;">
-                      <option value="admin" <%= u.role === 'admin' ? 'selected' : '' %>>admin</option>
-                      <option value="editor" <%= u.role === 'editor' ? 'selected' : '' %>>editor</option>
-                      <option value="author" <%= u.role === 'author' ? 'selected' : '' %>>author</option>
-                    </select>
-                    <input type="text" name="job_title" value="<%= u.job_title %>" style="width:120px;padding:0.25rem;border:1px solid #cbd5e1;border-radius:6px;font-size:0.8rem;">
-                    <input type="hidden" name="expertise" value="<%= u.expertise %>">
-                    <button type="submit" class="btn btn-outline btn-sm">Save</button>
-                  </form>
+                  <details style="min-width:240px;">
+                    <summary class="btn btn-outline btn-sm" style="cursor:pointer;list-style:none;">Edit Full Profile</summary>
+                    <form action="/admin/users/<%= u.id %>/role" method="POST" style="margin-top:0.65rem;padding:0.75rem;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;display:grid;gap:0.45rem;">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <div class="admin-grid-2" style="gap:0.45rem;">
+                        <div class="field" style="margin:0;"><label style="font-size:0.74rem;">Full Name</label><input type="text" name="name" value="<%= u.name %>" required style="padding:0.35rem 0.5rem;font-size:0.82rem;"></div>
+                        <div class="field" style="margin:0;"><label style="font-size:0.74rem;">Email</label><input type="email" name="email" value="<%= u.email %>" required style="padding:0.35rem 0.5rem;font-size:0.82rem;"></div>
+                      </div>
+                      <div class="admin-grid-2" style="gap:0.45rem;">
+                        <div class="field" style="margin:0;">
+                          <label style="font-size:0.74rem;">Role</label>
+                          <select name="role" style="padding:0.35rem 0.5rem;font-size:0.82rem;">
+                            <option value="admin" <%= u.role === 'admin' ? 'selected' : '' %>>admin</option>
+                            <option value="editor" <%= u.role === 'editor' ? 'selected' : '' %>>editor</option>
+                            <option value="author" <%= u.role === 'author' ? 'selected' : '' %>>author</option>
+                          </select>
+                        </div>
+                        <div class="field" style="margin:0;"><label style="font-size:0.74rem;">Job Title</label><input type="text" name="job_title" value="<%= u.job_title || '' %>" style="padding:0.35rem 0.5rem;font-size:0.82rem;"></div>
+                      </div>
+                      <div class="admin-grid-2" style="gap:0.45rem;">
+                        <div class="field" style="margin:0;"><label style="font-size:0.74rem;">Location</label><input type="text" name="location" value="<%= u.location || '' %>" placeholder="New York, NY, USA" style="padding:0.35rem 0.5rem;font-size:0.82rem;"></div>
+                        <div class="field" style="margin:0;"><label style="font-size:0.74rem;">Credentials</label><input type="text" name="credentials" value="<%= u.credentials || '' %>" style="padding:0.35rem 0.5rem;font-size:0.82rem;"></div>
+                      </div>
+                      <div class="field" style="margin:0;"><label style="font-size:0.74rem;">Expertise (comma-separated)</label><input type="text" name="expertise" value="<%= u.expertise || '' %>" style="padding:0.35rem 0.5rem;font-size:0.82rem;"></div>
+                      <div class="field" style="margin:0;"><label style="font-size:0.74rem;">Author Bio / Description</label><textarea name="bio" rows="3" style="padding:0.35rem 0.5rem;font-size:0.82rem;"><%= u.bio || '' %></textarea></div>
+                      <div class="admin-grid-3" style="gap:0.4rem;">
+                        <div class="field" style="margin:0;"><label style="font-size:0.74rem;">X / Twitter</label><input type="text" name="twitter_handle" value="<%= u.twitter_handle || '' %>" style="padding:0.32rem 0.45rem;font-size:0.8rem;"></div>
+                        <div class="field" style="margin:0;"><label style="font-size:0.74rem;">LinkedIn URL</label><input type="url" name="linkedin_url" value="<%= u.linkedin_url || '' %>" style="padding:0.32rem 0.45rem;font-size:0.8rem;"></div>
+                        <div class="field" style="margin:0;"><label style="font-size:0.74rem;">Website URL</label><input type="url" name="website_url" value="<%= u.website_url || '' %>" style="padding:0.32rem 0.45rem;font-size:0.8rem;"></div>
+                      </div>
+                      <div class="field" style="margin:0;"><label style="font-size:0.74rem;">Reset Password (optional, min 8 chars)</label><input type="password" name="new_password" placeholder="Leave blank to keep current" style="padding:0.35rem 0.5rem;font-size:0.82rem;"></div>
+                      <button type="submit" class="btn btn-primary btn-sm">Save Author Profile</button>
+                    </form>
+                  </details>
                 </td>
               </tr>
               <% }) %>

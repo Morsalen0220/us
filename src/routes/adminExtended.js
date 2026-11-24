@@ -70,17 +70,47 @@ router.post('/users', requireRole('admin'), verifyCsrf, (req, res) => {
 
 router.post('/users/:id/role', requireRole('admin'), verifyCsrf, (req, res) => {
   const id = Number.parseInt(req.params.id, 10);
-  const role = ['admin', 'editor', 'author'].includes(req.body.role) ? req.body.role : 'author';
-  const jobTitle = String(req.body.job_title || '').trim();
-  const expertise = String(req.body.expertise || '').trim();
+  const existing = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
+  if (!existing) return res.redirect('/admin/users?err=Author+not+found');
+
+  const role = ['admin', 'editor', 'author'].includes(req.body.role) ? req.body.role : existing.role;
+  const name = String(req.body.name || existing.name).trim() || existing.name;
+  const email = String(req.body.email || existing.email).trim().toLowerCase() || existing.email;
+  const jobTitle = req.body.job_title !== undefined ? String(req.body.job_title).trim() : existing.job_title;
+  const expertise = req.body.expertise !== undefined ? String(req.body.expertise).trim() : existing.expertise;
+  const location = req.body.location !== undefined ? String(req.body.location).trim() : existing.location;
+  const credentials = req.body.credentials !== undefined ? String(req.body.credentials).trim() : existing.credentials;
+  const bio = req.body.bio !== undefined ? String(req.body.bio).trim() : existing.bio;
+  const twitterHandle = req.body.twitter_handle !== undefined ? String(req.body.twitter_handle).trim() : existing.twitter_handle;
+  const linkedinUrl = req.body.linkedin_url !== undefined ? String(req.body.linkedin_url).trim() : existing.linkedin_url;
+  const websiteUrl = req.body.website_url !== undefined ? String(req.body.website_url).trim() : existing.website_url;
+  const newPassword = String(req.body.new_password || '');
 
   if (id === req.user.id && role !== 'admin') {
     return res.redirect('/admin/users?err=Cannot+demote+yourself');
   }
 
-  db.prepare('UPDATE users SET role = ?, job_title = ?, expertise = ? WHERE id = ?').run(role, jobTitle, expertise, id);
+  try {
+    db.prepare(`
+      UPDATE users SET
+        name = ?, email = ?, role = ?, job_title = ?, expertise = ?,
+        location = ?, credentials = ?, bio = ?, twitter_handle = ?,
+        linkedin_url = ?, website_url = ?
+      WHERE id = ?
+    `).run(name, email, role, jobTitle, expertise, location, credentials, bio, twitterHandle, linkedinUrl, websiteUrl, id);
+
+    if (newPassword) {
+      if (newPassword.length < 8) {
+        return res.redirect('/admin/users?err=New+password+must+be+at+least+8+characters');
+      }
+      db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(hashPassword(newPassword), id);
+    }
+  } catch (err) {
+    return res.redirect(`/admin/users?err=${encodeURIComponent(err.message || 'Could not update author')}`);
+  }
+
   pageCache.clear();
-  res.redirect('/admin/users?msg=Author+updated');
+  res.redirect('/admin/users?msg=Author+profile+updated');
 });
 
 // 2. Editorial Calendar & Approval Queue
