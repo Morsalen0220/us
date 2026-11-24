@@ -31,8 +31,10 @@
     <span aria-current="page"><%= post.title %></span>
   </nav>
 
-  <div class="layout-split">
-    <article id="articleBody">
+  <div class="article-flow-layout">
+    <%- include('../partials/sidebar') %>
+
+    <article id="articleBody" class="article-flow-main">
       <header class="article-header">
         <div class="trust-badges">
           <% if (post.category_name) { %>
@@ -245,7 +247,7 @@
       </section>
 
       <% if (relatedPosts && relatedPosts.length > 0) { %>
-      <section style="margin-top:2.25rem;" aria-label="Related Stories">
+      <section class="article-related-section" style="margin-top:2.25rem;" aria-label="Related Stories">
         <div class="section-header">
           <h2 class="section-title">Keep Reading</h2>
         </div>
@@ -271,8 +273,6 @@
       </section>
       <% } %>
     </article>
-
-    <%- include('../partials/sidebar') %>
   </div>
 </main>
 

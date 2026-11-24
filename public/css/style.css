@@ -742,6 +742,83 @@ img {
   align-items: start;
 }
 
+/* Article Magazine-Flow Layout: Sidebar floats right at top; content automatically expands full-width below sidebar */
+.article-flow-layout {
+  display: block;
+}
+
+.article-flow-layout::after {
+  content: '';
+  display: block;
+  clear: both;
+}
+
+.article-flow-layout > .sidebar {
+  float: right;
+  width: 336px;
+  margin: 0 0 1.75rem 2rem;
+}
+
+.article-flow-main {
+  min-width: 0;
+}
+
+.article-flow-main .article-header,
+.article-flow-main .article-hero-figure,
+.article-flow-main .yt-lite,
+.article-flow-main .whats-new-box,
+.article-flow-main .takeaways-box,
+.article-flow-main .toc-box,
+.article-flow-main .ad-slot,
+.article-flow-main .ai-assistant-box,
+.article-flow-main .sources-box,
+.article-flow-main .corrections-box {
+  display: flow-root;
+}
+
+.article-flow-main .feedback-bar,
+.article-flow-main .author-box {
+  overflow: hidden;
+}
+
+.article-flow-main .article-prose {
+  max-width: none;
+}
+
+.article-flow-main .article-prose ul,
+.article-flow-main .article-prose ol {
+  overflow: hidden;
+}
+
+.article-flow-main .article-prose blockquote,
+.article-flow-main .article-prose pre,
+.article-flow-main .article-prose figure {
+  display: flow-root;
+}
+
+.article-flow-main .article-related-section {
+  clear: both;
+}
+
+@media (max-width: 1023px) {
+  .article-flow-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+  }
+
+  .article-flow-layout > .article-flow-main {
+    order: 1;
+  }
+
+  .article-flow-layout > .sidebar {
+    order: 2;
+    float: none;
+    width: 100%;
+    margin: 0;
+  }
+}
+
 .trending-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
