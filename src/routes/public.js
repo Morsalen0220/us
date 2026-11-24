@@ -31,7 +31,7 @@ const BASE_POST_SELECT = `
   SELECT p.*,
          c.name AS category_name, c.slug AS category_slug, c.accent_color AS category_color,
          u.name AS author_name, u.slug AS author_slug, u.job_title AS author_job_title,
-         u.expertise AS author_expertise, u.bio AS author_bio, u.twitter_handle AS author_twitter,
+         u.expertise AS author_expertise, u.bio AS author_bio, u.avatar_url AS author_avatar, u.twitter_handle AS author_twitter,
          u.linkedin_url AS author_linkedin, u.website_url AS author_website, u.location AS author_location
   FROM posts p
   LEFT JOIN categories c ON c.id = p.category_id
@@ -289,6 +289,7 @@ router.get('/article/:slug', (req, res, next) => {
         job_title: post.author_job_title,
         expertise: post.author_expertise,
         bio: post.author_bio,
+        avatar_url: post.author_avatar,
         twitter_handle: post.author_twitter,
         linkedin_url: post.author_linkedin,
         website_url: post.author_website,
@@ -823,7 +824,7 @@ router.get('/tag/:slug', withCache(60_000), (req, res) => {
 router.get('/author/:slug', withCache(60_000), (req, res) => {
   const { settings, siteUrl } = res.locals;
   const author = db.prepare(`
-    SELECT id, name, slug, role, job_title, expertise, bio, twitter_handle, linkedin_url, website_url, location, credentials, created_at
+    SELECT id, name, slug, role, job_title, expertise, bio, avatar_url, twitter_handle, linkedin_url, website_url, location, credentials, created_at
     FROM users WHERE slug = ? LIMIT 1
   `).get(req.params.slug);
   if (!author) {
@@ -919,7 +920,7 @@ router.get('/search', (req, res) => {
 
 router.get('/about', withCache(120_000), (req, res) => {
   const { settings, siteUrl } = res.locals;
-  const authors = db.prepare('SELECT id, name, slug, job_title, expertise, bio, twitter_handle FROM users ORDER BY id ASC').all();
+  const authors = db.prepare('SELECT id, name, slug, job_title, expertise, bio, avatar_url, twitter_handle FROM users ORDER BY id ASC').all();
   res.render('public/page', {
     pageKey: 'about',
     pageTitle: `About ${settings.site_name || 'TechHaven US'}`,

@@ -16,7 +16,7 @@
   <div class="layout-split">
     <div>
       <section class="author-box" style="margin-top:0;flex-wrap:wrap;">
-        <div class="author-avatar" style="width:76px;height:76px;font-size:1.75rem;"><%= author.name.slice(0, 1).toUpperCase() %></div>
+        <div class="author-avatar" style="width:76px;height:76px;font-size:1.75rem;"><% if (author.avatar_url) { %><img src="<%= assetUrl(author.avatar_url) %>" alt="<%= author.name %>" width="76" height="76" loading="lazy"><% } else { %><%= author.name.slice(0, 1).toUpperCase() %><% } %></div>
         <div style="flex:1;min-width:0;">
           <div style="display:flex;gap:0.45rem;flex-wrap:wrap;align-items:center;">
             <span class="cat-pill" style="--cat-color:#2563EB"><%= author.job_title || 'Editorial Author' %></span>

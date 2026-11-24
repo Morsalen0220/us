@@ -116,12 +116,18 @@ export function buildAuthorPersonJsonLd(author, settings = {}, includeContext = 
   if (author?.linkedin_url) sameAs.push(author.linkedin_url);
   if (author?.website_url && author.website_url !== authorUrl) sameAs.push(author.website_url);
 
+  const avatarRaw = String(author?.avatar_url || '').trim();
+  const avatarAbs = avatarRaw
+    ? (/^https?:\/\//i.test(avatarRaw) ? avatarRaw : `${siteUrl}${avatarRaw.startsWith('/') ? '' : '/'}${avatarRaw}`)
+    : '';
+
   const person = {
     ...(includeContext ? { '@context': 'https://schema.org' } : {}),
     '@type': 'Person',
     '@id': `${authorUrl}#person`,
     name: author?.name || 'TechHaven Editorial',
     url: authorUrl,
+    ...(avatarAbs ? { image: avatarAbs } : {}),
     ...(author?.job_title ? { jobTitle: author.job_title } : {}),
     ...(author?.bio ? { description: author.bio } : {}),
     ...(author?.location ? { homeLocation: { '@type': 'Place', name: author.location } } : {}),

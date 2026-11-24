@@ -75,6 +75,29 @@ function escapeXml(str) {
     .replace(/'/g, '&apos;');
 }
 
+export async function processAvatarImage(buffer, originalName = 'avatar') {
+  if (!Buffer.isBuffer(buffer) || buffer.length === 0) {
+    throw new Error('Empty image buffer provided.');
+  }
+  const baseName = slugifyName(originalName);
+  const uniqueId = crypto.randomBytes(4).toString('hex');
+  const filename = `avatar-${baseName}-${uniqueId}.webp`;
+  const fullPath = path.join(UPLOAD_DIR, filename);
+
+  await sharp(buffer, { animated: false })
+    .rotate()
+    .resize(320, 320, { fit: 'cover', position: 'attention' })
+    .webp({ quality: 86, effort: 4 })
+    .toFile(fullPath);
+
+  return {
+    filename,
+    url: `/uploads/${filename}`,
+    width: 320,
+    height: 320
+  };
+}
+
 export async function processUploadedImage(buffer, originalName, mimeType = '', options = {}) {
   if (!Buffer.isBuffer(buffer) || buffer.length === 0) {
     throw new Error('Empty image buffer provided.');

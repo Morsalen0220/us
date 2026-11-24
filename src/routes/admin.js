@@ -14,7 +14,7 @@ import {
   verifyPasswordConstantTime
 } from '../utils/auth.js';
 import { pageCache } from '../utils/cache.js';
-import { deleteUploadedFiles, processUploadedImage } from '../utils/imageProcessor.js';
+import { deleteUploadedFiles, processAvatarImage, processUploadedImage } from '../utils/imageProcessor.js';
 import { injectMidArticleAd, renderArticleContent } from '../utils/markdown.js';
 import { sendBreakingPushNotification } from '../utils/push.js';
 import { slugify } from '../utils/seo.js';
@@ -319,7 +319,7 @@ function renderAdminArticlePreview(req, res, previewPostData) {
     ? db.prepare('SELECT id, name, slug, accent_color FROM categories WHERE id = ? LIMIT 1').get(categoryId)
     : null;
   const author = authorId
-    ? db.prepare('SELECT id, name, slug, job_title, expertise, bio, twitter_handle, linkedin_url, website_url, location FROM users WHERE id = ? LIMIT 1').get(authorId)
+    ? db.prepare('SELECT id, name, slug, job_title, expertise, bio, avatar_url, twitter_handle, linkedin_url, website_url, location FROM users WHERE id = ? LIMIT 1').get(authorId)
     : null;
 
   const contentMd = String(previewPostData.content_md || '');
@@ -373,7 +373,8 @@ function renderAdminArticlePreview(req, res, previewPostData) {
     author_slug: author?.slug || 'alex-mercer',
     author_job_title: author?.job_title || '',
     author_expertise: author?.expertise || '',
-    author_bio: author?.bio || ''
+    author_bio: author?.bio || '',
+    author_avatar: author?.avatar_url || ''
   };
 
   const midParagraph = Number.parseInt(settings.ads_mid_paragraph || '3', 10) || 3;
@@ -1118,6 +1119,50 @@ router.post('/settings', verifyCsrf, (req, res) => {
 
   pageCache.clear();
   return res.redirect(`/admin/settings?msg=${encodeURIComponent('Settings saved successfully')}`);
+});
+
+router.post('/settings/avatar', verifyCsrf, upload.single('avatar'), async (req, res) => {
+  try {
+    if (req.body.remove_avatar === '1') {
+      db.prepare("UPDATE users SET avatar_url = '' WHERE id = ?").run(req.user.id);
+      pageCache.clear();
+      return res.redirect('/admin/settings?msg=Profile+photo+removed');
+    }
+    if (!req.file) {
+      return res.redirect('/admin/settings?err=Please+choose+an+image+file+to+upload');
+    }
+    const processed = await processAvatarImage(req.file.buffer, req.user.slug || req.file.originalname);
+    db.prepare('UPDATE users SET avatar_url = ? WHERE id = ?').run(processed.url, req.user.id);
+    pageCache.clear();
+    return res.redirect('/admin/settings?msg=Author+profile+photo+updated');
+  } catch (err) {
+    return res.redirect(`/admin/settings?err=${encodeURIComponent(err.message || 'Avatar upload failed')}`);
+  }
+});
+
+router.post('/users/:id/avatar', verifyCsrf, upload.single('avatar'), async (req, res) => {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).send('Permission denied.');
+  }
+  const targetId = Number.parseInt(req.params.id, 10);
+  const target = db.prepare('SELECT id, slug FROM users WHERE id = ?').get(targetId);
+  if (!target) return res.redirect('/admin/users?err=Author+not+found');
+  try {
+    if (req.body.remove_avatar === '1') {
+      db.prepare("UPDATE users SET avatar_url = '' WHERE id = ?").run(target.id);
+      pageCache.clear();
+      return res.redirect('/admin/users?msg=Author+photo+removed');
+    }
+    if (!req.file) {
+      return res.redirect('/admin/users?err=Please+select+a+photo+file');
+    }
+    const processed = await processAvatarImage(req.file.buffer, target.slug || req.file.originalname);
+    db.prepare('UPDATE users SET avatar_url = ? WHERE id = ?').run(processed.url, target.id);
+    pageCache.clear();
+    return res.redirect('/admin/users?msg=Author+photo+updated');
+  } catch (err) {
+    return res.redirect(`/admin/users?err=${encodeURIComponent(err.message || 'Photo upload failed')}`);
+  }
 });
 
 router.post('/settings/toggle-ads', verifyCsrf, (req, res) => {

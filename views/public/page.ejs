@@ -42,7 +42,7 @@
     <h2>Contributors &amp; Editorial Team</h2>
     <% authors.forEach(function(a) { %>
     <div class="author-box">
-      <div class="author-avatar"><%= a.name.slice(0, 1).toUpperCase() %></div>
+      <div class="author-avatar"><% if (a.avatar_url) { %><img src="<%= assetUrl(a.avatar_url) %>" alt="<%= a.name %>" width="56" height="56" loading="lazy"><% } else { %><%= a.name.slice(0, 1).toUpperCase() %><% } %></div>
       <div>
         <h3 style="margin:0 0 0.25rem;"><a href="/author/<%= a.slug %>"><%= a.name %></a><% if (a.job_title) { %> <span style="font-size:0.85rem;color:var(--text-soft);">— <%= a.job_title %></span><% } %></h3>
         <p style="margin:0;"><%= a.bio %></p>

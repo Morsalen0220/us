@@ -14,7 +14,7 @@ export function attachAuth(req, res, next) {
   res.locals.csrfToken = '';
 
   if (payload) {
-    const user = db.prepare('SELECT id, name, slug, email, role, job_title, expertise, location, credentials, bio, twitter_handle, linkedin_url, website_url FROM users WHERE id = ?').get(payload.uid);
+    const user = db.prepare('SELECT id, name, slug, email, role, job_title, expertise, location, credentials, bio, avatar_url, twitter_handle, linkedin_url, website_url FROM users WHERE id = ?').get(payload.uid);
     if (user) {
       req.user = user;
       req.sessionToken = token;

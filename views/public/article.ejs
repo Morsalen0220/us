@@ -230,7 +230,7 @@
 
       <!-- Author Bio + Expertise (E-E-A-T) -->
       <section class="author-box" aria-label="About the Author">
-        <div class="author-avatar"><%= (post.author_name || 'A').slice(0, 1).toUpperCase() %></div>
+        <div class="author-avatar"><% if (post.author_avatar) { %><img src="<%= assetUrl(post.author_avatar) %>" alt="<%= post.author_name || 'Author' %>" width="56" height="56" loading="lazy"><% } else { %><%= (post.author_name || 'A').slice(0, 1).toUpperCase() %><% } %></div>
         <div>
           <div style="font-size:0.74rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--accent);">Reviewed &amp; Written By</div>
           <h3 style="margin:0.15rem 0 0.25rem;font-size:1.05rem;">
