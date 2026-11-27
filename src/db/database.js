@@ -586,11 +586,23 @@ export function syncPostTags(postId, metaTagsString = '') {
 }
 
 let lastScheduleCheckAt = 0;
+let scheduledPublishHook = null;
+
+export function onScheduledPostsPublished(fn) {
+  scheduledPublishHook = typeof fn === 'function' ? fn : null;
+}
 
 export function publishDueScheduledPosts(force = false) {
   const now = Date.now();
   if (!force && now - lastScheduleCheckAt < 30_000) return 0;
   lastScheduleCheckAt = now;
+
+  const dueRows = db.prepare(`
+    SELECT id FROM posts
+    WHERE status = 'scheduled' AND datetime(published_at) <= datetime('now')
+  `).all();
+
+  if (dueRows.length === 0) return 0;
 
   const info = db.prepare(`
     UPDATE posts
@@ -600,6 +612,13 @@ export function publishDueScheduledPosts(force = false) {
 
   if (info.changes > 0) {
     pageCache.clear();
+    if (scheduledPublishHook) {
+      for (const row of dueRows) {
+        try {
+          scheduledPublishHook(row.id);
+        } catch {}
+      }
+    }
   }
   return info.changes;
 }

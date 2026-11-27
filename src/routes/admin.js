@@ -14,6 +14,7 @@ import {
   verifyPasswordConstantTime
 } from '../utils/auth.js';
 import { pageCache } from '../utils/cache.js';
+import { getCloudflareConfig, purgeCloudflareUrls, triggerSelectivePostPurge, triggerSelectiveSectionPurge } from '../utils/cloudflare.js';
 import { deleteUploadedFiles, processAvatarImage, processUploadedImage } from '../utils/imageProcessor.js';
 import { injectMidArticleAd, renderArticleContent } from '../utils/markdown.js';
 import { sendBreakingPushNotification } from '../utils/push.js';
@@ -713,6 +714,7 @@ router.post('/posts', verifyCsrf, async (req, res) => {
   }
 
   pageCache.clear();
+  triggerSelectivePostPurge({ postId: newId });
   return res.redirect(`/admin/posts/${newId}/edit?saved=${payload.status === 'draft' ? 'draft' : '1'}`);
 });
 
@@ -787,6 +789,7 @@ router.post('/posts/:id', verifyCsrf, async (req, res) => {
   }
 
   pageCache.clear();
+  triggerSelectivePostPurge({ postId: id, oldPost: existing });
   return res.redirect(`/admin/posts/${id}/edit?saved=${payload.status === 'draft' ? 'draft' : '1'}`);
 });
 
@@ -805,6 +808,7 @@ router.post('/posts/:id/restore/:revId', verifyCsrf, (req, res) => {
   `).run(rev.title, rev.subtitle, rev.content_md, rendered.html, JSON.stringify(rendered.toc), rendered.wordCount, rendered.readingTime, rev.meta_title, rev.meta_description, id);
 
   pageCache.clear();
+  triggerSelectivePostPurge({ postId: id });
   res.redirect(`/admin/posts/${id}/edit?saved=1`);
 });
 
@@ -818,6 +822,7 @@ router.post('/posts/:id/approve', verifyCsrf, (req, res) => {
     WHERE id = ?
   `).run(req.user.id, id);
   pageCache.clear();
+  triggerSelectivePostPurge({ postId: id });
   res.redirect('/admin/calendar?msg=Article+approved+and+published');
 });
 
@@ -872,8 +877,12 @@ router.get('/api/seo/internal-links', (req, res) => {
 });
 
 router.post('/posts/:id/delete', verifyCsrf, (req, res) => {
+  const existing = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id);
   db.prepare('DELETE FROM posts WHERE id = ?').run(req.params.id);
   pageCache.clear();
+  if (existing) {
+    triggerSelectivePostPurge({ oldPost: existing });
+  }
   res.redirect('/admin/posts?msg=deleted');
 });
 
@@ -1007,12 +1016,14 @@ router.post('/categories', verifyCsrf, (req, res) => {
   `).run(name, slug, description, metaTitle, metaDescription, accentColor, sortOrder);
 
   pageCache.clear();
+  triggerSelectiveSectionPurge([`/category/${slug}`]);
   res.redirect('/admin/categories?msg=saved');
 });
 
 router.post('/categories/:id/delete', verifyCsrf, (req, res) => {
   db.prepare('DELETE FROM categories WHERE id = ?').run(req.params.id);
   pageCache.clear();
+  triggerSelectiveSectionPurge(['/']);
   res.redirect('/admin/categories?msg=deleted');
 });
 
@@ -1060,6 +1071,14 @@ router.post('/settings', verifyCsrf, (req, res) => {
       if (req.body[key] !== undefined) {
         setSetting(key, String(req.body[key]).trim());
       }
+    }
+  } else if (section === 'cloudflare') {
+    setSetting('cf_auto_purge', req.body.cf_auto_purge === '1' ? '1' : '0');
+    if (req.body.cf_zone_id !== undefined) {
+      setSetting('cf_zone_id', String(req.body.cf_zone_id).trim());
+    }
+    if (req.body.cf_api_token !== undefined) {
+      setSetting('cf_api_token', String(req.body.cf_api_token).trim());
     }
   } else if (section === 'monetization') {
     setSetting('ads_slots_visible', req.body.ads_slots_visible === '1' ? '1' : '0');
@@ -1118,7 +1137,30 @@ router.post('/settings', verifyCsrf, (req, res) => {
   }
 
   pageCache.clear();
+  if (section !== 'cloudflare') {
+    triggerSelectiveSectionPurge(['/']);
+  }
   return res.redirect(`/admin/settings?msg=${encodeURIComponent('Settings saved successfully')}`);
+});
+
+router.post('/settings/cloudflare-test', verifyCsrf, async (req, res) => {
+  const cfg = getCloudflareConfig();
+  if (!cfg.configured) {
+    return res.redirect('/admin/settings?err=Please+save+your+Cloudflare+Zone+ID+and+API+Token+first');
+  }
+  const testUrls = [
+    `${cfg.baseUrl}/`,
+    `${cfg.baseUrl}/?page=1`,
+    `${cfg.baseUrl}/sitemap.xml`,
+    `${cfg.baseUrl}/rss.xml`
+  ];
+  const result = await purgeCloudflareUrls(testUrls, cfg);
+  if (!result.ok) {
+    return res.redirect(`/admin/settings?err=${encodeURIComponent('Cloudflare Purge Failed: ' + result.error)}`);
+  }
+  return res.redirect(
+    `/admin/settings?msg=${encodeURIComponent(`Cloudflare Selective Purge succeeded (${result.purgedCount} URLs refreshed; all other articles & images kept cached)!`)}`
+  );
 });
 
 router.post('/settings/avatar', verifyCsrf, upload.single('avatar'), async (req, res) => {

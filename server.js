@@ -3,7 +3,7 @@ import express from 'express';
 import compression from 'compression';
 import helmet from 'helmet';
 import { LISTEN_TARGET, NODE_ENV, PUBLIC_DIR, SITE_URL, UPLOAD_DIR, VIEWS_DIR } from './src/config.js';
-import { db, logServerError, publishDueScheduledPosts } from './src/db/database.js';
+import { db, logServerError, onScheduledPostsPublished, publishDueScheduledPosts } from './src/db/database.js';
 import { seedDatabase } from './src/db/seed.js';
 import { attachAuth } from './src/middleware/authMiddleware.js';
 import { localsMiddleware } from './src/middleware/localsMiddleware.js';
@@ -11,6 +11,7 @@ import adminRoutes from './src/routes/admin.js';
 import publicRoutes from './src/routes/public.js';
 import { startDailyBackupScheduler } from './src/utils/backup.js';
 import { pageCache } from './src/utils/cache.js';
+import { triggerSelectivePostPurge } from './src/utils/cloudflare.js';
 
 const app = express();
 
@@ -75,6 +76,16 @@ app.get('/health', (req, res) => {
 app.use(attachAuth);
 app.use(localsMiddleware);
 
+// Prevent Cloudflare Edge Cache or browsers from ever caching Admin CMS, API endpoints, or logged-in views
+app.use((req, res, next) => {
+  if (req.path.startsWith('/admin') || req.path.startsWith('/api') || req.user) {
+    res.setHeader('Cache-Control', 'private, no-store, no-cache, must-revalidate');
+    res.setHeader('CDN-Cache-Control', 'no-store');
+    res.setHeader('Cloudflare-CDN-Cache-Control', 'no-store');
+  }
+  next();
+});
+
 // Dynamic 301/302 Redirect Manager middleware
 app.use((req, res, next) => {
   if (req.method !== 'GET' || req.path.startsWith('/admin') || req.path.startsWith('/api/')) {
@@ -113,6 +124,7 @@ let schedulersStarted = false;
 export async function startServer(listenTarget = LISTEN_TARGET) {
   process.env.__TECHHAVEN_STARTED = '1';
   await seedDatabase();
+  onScheduledPostsPublished((postId) => triggerSelectivePostPurge({ postId }));
   publishDueScheduledPosts(true);
 
   if (!schedulersStarted) {

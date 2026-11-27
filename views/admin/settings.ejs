@@ -124,6 +124,50 @@
       </section>
 
       <div>
+        <!-- Cloudflare Edge Cache Selective Auto-Purge -->
+        <section class="card" style="border:1.5px solid #38bdf8;">
+          <h2 style="margin:0 0 0.45rem;font-size:1.12rem;"><%- icon('globe', 19) %> Cloudflare Edge Cache (Selective Auto-Purge)</h2>
+          <div style="font-size:0.8rem;color:#64748b;margin-bottom:0.9rem;">
+            Keep 1-Day Edge Cache active without delaying new posts: whenever an article is published, edited, or scheduled, only the Homepage, its Category, Sitemap/RSS, and that Article URL are refreshed — all other articles &amp; WebP media stay cached!
+          </div>
+          <form action="/admin/settings" method="POST">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input type="hidden" name="section" value="cloudflare">
+
+            <div class="field">
+              <label class="toggle-row" for="cfAutoPurgeToggle">
+                <div>
+                  <div class="toggle-row-title">Auto-Purge Affected URLs on Publish / Update</div>
+                  <div class="toggle-row-sub">Never purges the whole website — refreshes only the exact 5–10 affected listing &amp; article URLs.</div>
+                </div>
+                <span class="toggle-switch">
+                  <input id="cfAutoPurgeToggle" type="checkbox" name="cf_auto_purge" value="1" <%= settings.cf_auto_purge !== '0' ? 'checked' : '' %>>
+                  <span class="toggle-slider"></span>
+                </span>
+              </label>
+            </div>
+
+            <div class="field">
+              <label for="cfZoneId">Cloudflare Zone ID</label>
+              <input id="cfZoneId" type="text" name="cf_zone_id" value="<%= settings.cf_zone_id || '' %>" placeholder="e.g. 0f5f199663f6863095fa1130d96f5951">
+            </div>
+
+            <div class="field">
+              <label for="cfApiToken">Cloudflare Cache Purge API Token (<code>Zone &rarr; Cache Purge &rarr; Purge</code>)</label>
+              <input id="cfApiToken" type="password" name="cf_api_token" value="<%= settings.cf_api_token || '' %>" placeholder="cfut_...">
+            </div>
+
+            <div style="display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center;">
+              <button type="submit" class="btn btn-primary">Save Cloudflare Settings</button>
+            </div>
+          </form>
+
+          <form action="/admin/settings/cloudflare-test" method="POST" style="margin-top:0.65rem;">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="btn btn-outline btn-sm">Test Selective Purge Now (Homepage + Sitemap + RSS)</button>
+          </form>
+        </section>
+
         <!-- General Branding -->
         <section class="card">
           <h2 style="margin:0 0 0.9rem;font-size:1.12rem;"><%- icon('globe', 19) %> Site Branding &amp; Domain</h2>

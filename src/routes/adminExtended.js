@@ -4,6 +4,7 @@ import { verifyCsrf } from '../middleware/authMiddleware.js';
 import { clearLoginLockouts, hashPassword } from '../utils/auth.js';
 import { createDatabaseBackup, getBackupPath, listBackups } from '../utils/backup.js';
 import { pageCache } from '../utils/cache.js';
+import { triggerSelectiveSectionPurge } from '../utils/cloudflare.js';
 import { ensureVapidKeys, sendBreakingPushNotification } from '../utils/push.js';
 import { extractLinksFromMarkdown, slugify, validatePostSchema } from '../utils/seo.js';
 import { generateDraftSocialPosts, publishSocialPost } from '../utils/social.js';
@@ -339,12 +340,14 @@ router.post('/ai-tools', verifyCsrf, (req, res) => {
   }
 
   pageCache.clear();
+  triggerSelectiveSectionPurge(['/ai-tools', `/ai-tools/${slug}`]);
   res.redirect('/admin/ai-tools?msg=AI+Tool+saved');
 });
 
 router.post('/ai-tools/:id/delete', verifyCsrf, (req, res) => {
   db.prepare('DELETE FROM ai_tools WHERE id = ?').run(req.params.id);
   pageCache.clear();
+  triggerSelectiveSectionPurge(['/ai-tools']);
   res.redirect('/admin/ai-tools?msg=AI+Tool+deleted');
 });
 
@@ -386,12 +389,14 @@ router.post('/briefings', verifyCsrf, (req, res) => {
   `).run(title, slug, briefingDate, summary, JSON.stringify(items), status);
 
   pageCache.clear();
+  triggerSelectiveSectionPurge(['/briefing', `/briefing/${slug}`]);
   res.redirect('/admin/briefings?msg=Briefing+saved');
 });
 
 router.post('/briefings/:id/delete', verifyCsrf, (req, res) => {
   db.prepare('DELETE FROM daily_briefings WHERE id = ?').run(req.params.id);
   pageCache.clear();
+  triggerSelectiveSectionPurge(['/briefing']);
   res.redirect('/admin/briefings?msg=Briefing+deleted');
 });
 
@@ -427,6 +432,7 @@ router.post('/timelines', verifyCsrf, (req, res) => {
   `).run(title, slug, description, categorySlug, region);
 
   pageCache.clear();
+  triggerSelectiveSectionPurge(['/timelines', `/timeline/${slug}`]);
   res.redirect('/admin/timelines?msg=Timeline+saved');
 });
 
@@ -447,12 +453,14 @@ router.post('/timelines/events', verifyCsrf, (req, res) => {
   db.prepare("UPDATE timelines SET updated_at = datetime('now') WHERE id = ?").run(timelineId);
 
   pageCache.clear();
+  triggerSelectiveSectionPurge(['/timelines']);
   res.redirect('/admin/timelines?msg=Timeline+event+added');
 });
 
 router.post('/timelines/events/:id/delete', verifyCsrf, (req, res) => {
   db.prepare('DELETE FROM timeline_events WHERE id = ?').run(req.params.id);
   pageCache.clear();
+  triggerSelectiveSectionPurge(['/timelines']);
   res.redirect('/admin/timelines?msg=Timeline+event+deleted');
 });
 
