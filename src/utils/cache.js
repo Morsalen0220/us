@@ -1,5 +1,5 @@
-const DEFAULT_TTL_MS = 60_000;
-const MAX_ENTRIES = 300;
+const DEFAULT_TTL_MS = 20 * 60_000; // 20 minutes default origin HTML cache
+const MAX_ENTRIES = 600;
 
 class MemoryCache {
   constructor() {

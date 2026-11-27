@@ -45,7 +45,11 @@ const REGION_MAP = {
   global: { dbValue: 'Global', name: 'Global Technology', description: 'Worldwide software, hardware, cybersecurity, and developer engineering coverage.' }
 };
 
-function withCache(ttlMs = 60_000, contentType = 'text/html; charset=utf-8') {
+const CACHE_15M = 15 * 60_000;
+const CACHE_20M = 20 * 60_000;
+const CACHE_30M = 30 * 60_000;
+
+function withCache(ttlMs = CACHE_20M, contentType = 'text/html; charset=utf-8') {
   return (req, res, next) => {
     publishDueScheduledPosts();
     if (req.method !== 'GET' || req.user) return next();
@@ -53,6 +57,7 @@ function withCache(ttlMs = 60_000, contentType = 'text/html; charset=utf-8') {
     const hit = pageCache.get(cacheKey);
     if (hit !== null) {
       res.setHeader('X-Cache', 'HIT');
+      res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=86400, stale-while-revalidate=3600');
       res.type(contentType);
       return res.send(hit);
     }
@@ -61,6 +66,7 @@ function withCache(ttlMs = 60_000, contentType = 'text/html; charset=utf-8') {
       if (res.statusCode === 200 && typeof body === 'string') {
         pageCache.set(cacheKey, body, ttlMs);
         res.setHeader('X-Cache', 'MISS');
+        res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=86400, stale-while-revalidate=3600');
       }
       return origSend(body);
     };
@@ -120,8 +126,8 @@ function getPopularTags(limit = 16) {
   `).all(limit);
 }
 
-router.get('/', withCache(60_000), (req, res) => {
-  recordPageView(req, null);
+router.get('/', withCache(CACHE_20M), (req, res) => {
+  setImmediate(() => recordPageView(req, null));
   const { settings, siteUrl } = res.locals;
   const page = Math.max(1, Number.parseInt(req.query.page || '1', 10) || 1);
   const perPage = 8;
@@ -231,14 +237,19 @@ router.get('/', withCache(60_000), (req, res) => {
 });
 
 router.get('/article/:slug', (req, res, next) => {
-  publishDueScheduledPosts();
-  const postMeta = db.prepare("SELECT id FROM posts WHERE slug = ? AND status = 'published' LIMIT 1").get(req.params.slug);
-  if (postMeta) {
-    db.prepare('UPDATE posts SET views = views + 1 WHERE id = ?').run(postMeta.id);
-    recordPageView(req, postMeta.id);
-  }
+  const slugParam = req.params.slug;
+  setImmediate(() => {
+    try {
+      publishDueScheduledPosts();
+      const postMeta = db.prepare("SELECT id FROM posts WHERE slug = ? AND status = 'published' LIMIT 1").get(slugParam);
+      if (postMeta) {
+        db.prepare('UPDATE posts SET views = views + 1 WHERE id = ?').run(postMeta.id);
+        recordPageView(req, postMeta.id);
+      }
+    } catch {}
+  });
   next();
-}, withCache(45_000), (req, res) => {
+}, withCache(CACHE_30M), (req, res) => {
   const { settings, siteUrl, getRawAdHtml } = res.locals;
   const post = db.prepare(`
     ${BASE_POST_SELECT}
@@ -378,7 +389,7 @@ router.get('/og/:slug.png', async (req, res) => {
   return res.send(pngBuffer);
 });
 
-router.get('/videos', withCache(60_000), (req, res) => {
+router.get('/videos', withCache(CACHE_20M), (req, res) => {
   const { settings, siteUrl } = res.locals;
   const filter = String(req.query.type || 'all');
   const rows = db.prepare(`
@@ -487,7 +498,7 @@ router.post('/api/articles/:id/ask', async (req, res) => {
   return res.json({ ok: true, ...result });
 });
 
-router.get('/category/:slug', withCache(60_000), (req, res) => {
+router.get('/category/:slug', withCache(CACHE_20M), (req, res) => {
   const { settings, siteUrl } = res.locals;
   const category = db.prepare('SELECT * FROM categories WHERE slug = ? LIMIT 1').get(req.params.slug);
   if (!category) {
@@ -540,7 +551,7 @@ router.get('/region/:region', (req, res) => {
   return res.redirect(301, '/');
 });
 
-router.get('/briefing', withCache(60_000), (req, res) => {
+router.get('/briefing', withCache(CACHE_20M), (req, res) => {
   const { settings, siteUrl } = res.locals;
   const rows = db.prepare(`
     SELECT * FROM daily_briefings WHERE status = 'published' ORDER BY briefing_date DESC LIMIT 20
@@ -560,7 +571,7 @@ router.get('/briefing', withCache(60_000), (req, res) => {
   });
 });
 
-router.get('/briefing/:slug', withCache(60_000), (req, res) => {
+router.get('/briefing/:slug', withCache(CACHE_20M), (req, res) => {
   const { settings, siteUrl } = res.locals;
   const row = db.prepare("SELECT * FROM daily_briefings WHERE slug = ? AND status = 'published' LIMIT 1").get(req.params.slug);
   if (!row) {
@@ -581,7 +592,7 @@ router.get('/briefing/:slug', withCache(60_000), (req, res) => {
   });
 });
 
-router.get('/timelines', withCache(60_000), (req, res) => {
+router.get('/timelines', withCache(CACHE_20M), (req, res) => {
   const { settings, siteUrl } = res.locals;
   const timelines = db.prepare(`
     SELECT t.*,
@@ -604,7 +615,7 @@ router.get('/timelines', withCache(60_000), (req, res) => {
   });
 });
 
-router.get('/timeline/:slug', withCache(60_000), (req, res) => {
+router.get('/timeline/:slug', withCache(CACHE_20M), (req, res) => {
   const { settings, siteUrl } = res.locals;
   const timeline = db.prepare("SELECT * FROM timelines WHERE slug = ? AND status = 'published' LIMIT 1").get(req.params.slug);
   if (!timeline) {
@@ -628,7 +639,7 @@ router.get('/timeline/:slug', withCache(60_000), (req, res) => {
   });
 });
 
-router.get('/ai-tools', withCache(60_000), (req, res) => {
+router.get('/ai-tools', withCache(CACHE_20M), (req, res) => {
   const { settings, siteUrl } = res.locals;
   const category = String(req.query.category || 'all').trim();
   const pricing = String(req.query.pricing || 'all').trim();
@@ -667,7 +678,7 @@ router.get('/ai-tools', withCache(60_000), (req, res) => {
   });
 });
 
-router.get('/ai-tools/:slug', withCache(60_000), (req, res) => {
+router.get('/ai-tools/:slug', withCache(CACHE_20M), (req, res) => {
   const { settings, siteUrl } = res.locals;
   const tool = db.prepare('SELECT * FROM ai_tools WHERE slug = ? LIMIT 1').get(req.params.slug);
   if (!tool) {
@@ -785,7 +796,7 @@ router.get('/api/posts/by-slugs', (req, res) => {
   return res.json({ ok: true, posts });
 });
 
-router.get('/tag/:slug', withCache(60_000), (req, res) => {
+router.get('/tag/:slug', withCache(CACHE_20M), (req, res) => {
   const { settings, siteUrl } = res.locals;
   const tag = db.prepare('SELECT * FROM tags WHERE slug = ? LIMIT 1').get(req.params.slug);
   if (!tag) {
@@ -821,7 +832,7 @@ router.get('/tag/:slug', withCache(60_000), (req, res) => {
   });
 });
 
-router.get('/author/:slug', withCache(60_000), (req, res) => {
+router.get('/author/:slug', withCache(CACHE_20M), (req, res) => {
   const { settings, siteUrl } = res.locals;
   const author = db.prepare(`
     SELECT id, name, slug, role, job_title, expertise, bio, avatar_url, twitter_handle, linkedin_url, website_url, location, credentials, created_at
@@ -918,7 +929,7 @@ router.get('/search', (req, res) => {
   });
 });
 
-router.get('/about', withCache(120_000), (req, res) => {
+router.get('/about', withCache(CACHE_30M), (req, res) => {
   const { settings, siteUrl } = res.locals;
   const authors = db.prepare('SELECT id, name, slug, job_title, expertise, bio, avatar_url, twitter_handle FROM users ORDER BY id ASC').all();
   res.render('public/page', {
@@ -936,7 +947,7 @@ router.get('/about', withCache(120_000), (req, res) => {
   });
 });
 
-router.get('/editorial-policy', withCache(120_000), (req, res) => {
+router.get('/editorial-policy', withCache(CACHE_30M), (req, res) => {
   const { settings, siteUrl } = res.locals;
   res.render('public/page', {
     pageKey: 'editorial',
@@ -953,7 +964,7 @@ router.get('/editorial-policy', withCache(120_000), (req, res) => {
   });
 });
 
-router.get('/privacy-policy', withCache(120_000), (req, res) => {
+router.get('/privacy-policy', withCache(CACHE_30M), (req, res) => {
   const { settings, siteUrl } = res.locals;
   res.render('public/page', {
     pageKey: 'privacy',
@@ -970,7 +981,7 @@ router.get('/privacy-policy', withCache(120_000), (req, res) => {
   });
 });
 
-router.get('/terms', withCache(120_000), (req, res) => {
+router.get('/terms', withCache(CACHE_30M), (req, res) => {
   const { settings, siteUrl } = res.locals;
   res.render('public/page', {
     pageKey: 'terms',
@@ -987,7 +998,7 @@ router.get('/terms', withCache(120_000), (req, res) => {
   });
 });
 
-router.get('/disclaimer', withCache(120_000), (req, res) => {
+router.get('/disclaimer', withCache(CACHE_30M), (req, res) => {
   const { settings, siteUrl } = res.locals;
   res.render('public/page', {
     pageKey: 'disclaimer',
@@ -1188,7 +1199,7 @@ router.get('/newsletter/unsubscribe', async (req, res) => {
   });
 });
 
-router.get('/sitemap.xml', withCache(120_000, 'application/xml; charset=utf-8'), (req, res) => {
+router.get('/sitemap.xml', withCache(CACHE_15M, 'application/xml; charset=utf-8'), (req, res) => {
   const { siteUrl, categories } = res.locals;
   const posts = db.prepare(`
     SELECT slug, title, excerpt, meta_title, featured_image, featured_image_title, featured_image_caption, featured_image_description, featured_image_alt, is_featured, published_at, updated_at, created_at
@@ -1208,7 +1219,7 @@ router.get('/sitemap.xml', withCache(120_000, 'application/xml; charset=utf-8'),
   res.type('application/xml; charset=utf-8').send(xml);
 });
 
-router.get(['/rss.xml', '/feed.xml'], withCache(120_000, 'application/rss+xml; charset=utf-8'), (req, res) => {
+router.get(['/rss.xml', '/feed.xml'], withCache(CACHE_15M, 'application/rss+xml; charset=utf-8'), (req, res) => {
   const { settings, siteUrl } = res.locals;
   const posts = db.prepare(`
     SELECT p.slug, p.title, p.meta_title, p.meta_description, p.excerpt, p.featured_image, p.published_at, p.created_at,
