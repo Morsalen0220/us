@@ -24,6 +24,15 @@ if (NODE_ENV !== 'test') {
 }
 app.disable('x-powered-by');
 
+// Canonical non-www redirect (consolidates SEO & favicon indexing on techhavenus.com)
+app.use((req, res, next) => {
+  const host = String(req.headers.host || '').toLowerCase();
+  if (host === 'www.techhavenus.com') {
+    return res.redirect(301, `https://techhavenus.com${req.originalUrl}`);
+  }
+  next();
+});
+
 app.use(compression({ threshold: 512 }));
 app.use(
   helmet({
@@ -76,14 +85,13 @@ app.use(
     setHeaders(res, filePath) {
       if (filePath.endsWith('sw.js')) {
         res.setHeader('Cache-Control', 'no-cache');
+      } else if (filePath.endsWith('favicon.ico')) {
+        res.setHeader('Content-Type', 'image/x-icon');
+        res.setHeader('Cache-Control', 'public, max-age=86400');
       }
     }
   })
 );
-
-app.get('/favicon.ico', (req, res) => {
-  res.redirect(301, '/favicon.svg');
-});
 
 app.get('/health', (req, res) => {
   const t0 = Date.now();

@@ -464,6 +464,51 @@ export function buildRobotsTxt(siteUrl, customRules = '') {
   return lines.join('\n');
 }
 
+export function buildLlmsTxt(siteUrl, settings, categories = [], posts = []) {
+  const base = String(siteUrl || 'https://techhavenus.com').replace(/\/+$/, '');
+  const siteName = settings.site_name || 'TechHaven US';
+  const desc =
+    settings.site_description ||
+    'Independent technology publication covering AI, gadgets, hardware benchmarks, software, cybersecurity, PC & console gaming (GTA 5 & GTA 6), product reviews, comparisons, and practical how-to guides.';
+
+  const lines = [
+    `# ${siteName}`,
+    '',
+    `> ${desc}`,
+    '',
+    '## Key Hubs & Feeds',
+    `- [Homepage](${base}/): Latest technology analysis, reviews, and guides`,
+    `- [AI Tools Directory](${base}/ai-tools): Tested AI assistants, coding tools, and productivity software`,
+    `- [Daily AI Briefing](${base}/briefing): Concise executive summaries of major AI & tech developments`,
+    `- [Tech Timelines](${base}/timelines): Chronological trackers for major launches & industry events`,
+    `- [Video Reviews & Shorts](${base}/videos): Hands-on video breakdowns and tutorials`,
+    `- [Editorial & Fact-Check Policy](${base}/editorial-policy): Verification standards and correction policy`,
+    `- [RSS Feed](${base}/rss.xml): Full latest article feed`,
+    `- [XML Sitemap](${base}/sitemap.xml): Complete indexable URL map`,
+    ''
+  ];
+
+  if (categories.length > 0) {
+    lines.push('## Coverage Categories');
+    for (const cat of categories) {
+      const catDesc = cat.description ? `: ${cat.description}` : '';
+      lines.push(`- [${cat.name}](${base}/category/${cat.slug})${catDesc}`);
+    }
+    lines.push('');
+  }
+
+  if (posts.length > 0) {
+    lines.push('## Recent Guides, Reviews & Analysis');
+    for (const post of posts) {
+      const summary = String(post.excerpt || post.meta_description || '').replace(/\s+/g, ' ').trim();
+      lines.push(`- [${post.title}](${base}/article/${post.slug})${summary ? `: ${summary}` : ''}`);
+    }
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
 export function validatePostSchema(post, author) {
   const issues = [];
   if (!post.meta_title && !post.title) issues.push('Missing headline');

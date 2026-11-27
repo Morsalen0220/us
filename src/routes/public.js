@@ -17,6 +17,7 @@ import {
   buildArticleJsonLd,
   buildBreadcrumbJsonLd,
   buildCollectionJsonLd,
+  buildLlmsTxt,
   buildOrganizationJsonLd,
   buildProfilePageJsonLd,
   buildRobotsTxt,
@@ -1257,6 +1258,18 @@ router.get(['/rss.xml', '/feed.xml'], withCache(CACHE_15M, 'application/rss+xml;
 router.get('/robots.txt', withCache(300_000, 'text/plain; charset=utf-8'), (req, res) => {
   const { settings, siteUrl } = res.locals;
   res.type('text/plain; charset=utf-8').send(buildRobotsTxt(siteUrl, settings.robots_extra || ''));
+});
+
+router.get('/llms.txt', withCache(CACHE_15M, 'text/plain; charset=utf-8'), (req, res) => {
+  const { settings, siteUrl, categories } = res.locals;
+  const posts = db.prepare(`
+    SELECT slug, title, excerpt, meta_description
+    FROM posts
+    WHERE status = 'published'
+    ORDER BY published_at DESC
+    LIMIT 40
+  `).all();
+  res.type('text/plain; charset=utf-8').send(buildLlmsTxt(siteUrl, settings, categories, posts));
 });
 
 router.get('/ads.txt', withCache(300_000, 'text/plain; charset=utf-8'), (req, res) => {

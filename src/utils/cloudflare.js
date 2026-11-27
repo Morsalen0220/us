@@ -71,7 +71,8 @@ export function collectUrlsForPostRecord(post, baseUrl) {
     `${base}/`,
     `${base}/?page=1`,
     `${base}/sitemap.xml`,
-    `${base}/rss.xml`
+    `${base}/rss.xml`,
+    `${base}/llms.txt`
   ];
 
   if (!post) return urls;
