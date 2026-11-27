@@ -31,10 +31,8 @@
     <span aria-current="page"><%= post.title %></span>
   </nav>
 
-  <div class="article-flow-layout">
-    <%- include('../partials/sidebar') %>
-
-    <article id="articleBody" class="article-flow-main">
+  <article id="articleBody" class="article-layout">
+    <div class="article-top-lead">
       <header class="article-header">
         <div class="trust-badges">
           <% if (post.category_name) { %>
@@ -130,7 +128,9 @@
         </ul>
       </section>
       <% } %>
+    </div>
 
+    <div class="article-body-center">
       <%- renderAd('ads_slot_article_top') %>
 
       <% if (Array.isArray(toc) && toc.length >= 2) { %>
@@ -149,6 +149,9 @@
       <div class="article-prose">
         <%- articleBodyHtml %>
       </div>
+    </div>
+
+    <div class="article-bottom-full">
 
       <% if (typeof isPreview === 'undefined' || !isPreview) { %>
       <!-- AI Article Assistant -->
@@ -272,8 +275,10 @@
         </div>
       </section>
       <% } %>
-    </article>
-  </div>
+    </div>
+
+    <%- include('../partials/sidebar') %>
+  </article>
 </main>
 
 <%- include('../partials/footer') %>
