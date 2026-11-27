@@ -25,6 +25,26 @@ function absoluteUrl(siteUrl, maybeRelative) {
   return `${base}${pathPart}`;
 }
 
+export function toIsoTimestamp(raw) {
+  if (!raw) return '';
+  const str = String(raw).trim();
+  if (!str) return '';
+  const normalized = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(str)
+    ? `${str.replace(' ', 'T')}Z`
+    : str;
+  const dt = new Date(normalized);
+  return Number.isNaN(dt.getTime()) ? '' : dt.toISOString();
+}
+
+function maxIsoTimestamp(items, picker) {
+  let best = '';
+  for (const item of items || []) {
+    const iso = toIsoTimestamp(picker(item));
+    if (iso && iso > best) best = iso;
+  }
+  return best;
+}
+
 export function serializeJsonLd(obj) {
   return JSON.stringify(obj).replace(/<\/script/gi, '<\\/script');
 }
@@ -184,8 +204,8 @@ export function buildArticleJsonLd(post, category, author, tags, settings) {
       caption: post.featured_image_caption || post.featured_image_alt || post.title,
       description: post.featured_image_description || post.featured_image_caption || post.featured_image_alt || post.excerpt
     },
-    datePublished: post.published_at || post.created_at,
-    dateModified: post.updated_at || post.published_at || post.created_at,
+    datePublished: toIsoTimestamp(post.published_at || post.created_at) || post.published_at || post.created_at,
+    dateModified: toIsoTimestamp(post.updated_at || post.published_at || post.created_at) || post.updated_at || post.published_at || post.created_at,
     author: buildAuthorPersonJsonLd(author, settings, false),
     publisher: {
       '@type': 'Organization',
@@ -248,20 +268,37 @@ export function buildCollectionJsonLd(name, description, url, siteUrl) {
 
 export function buildSitemapXml(siteUrl, posts, categories, tags, extras = {}) {
   const base = String(siteUrl || 'https://techhavenus.com').replace(/\/+$/, '');
-  const nowIso = new Date().toISOString();
+
+  const latestPostIso = maxIsoTimestamp(posts, (p) => p.updated_at || p.published_at || p.created_at);
+  const latestVideoIso = maxIsoTimestamp(
+    (posts || []).filter((p) => p.video_url),
+    (p) => p.updated_at || p.published_at || p.created_at
+  );
+  const latestAiToolIso = maxIsoTimestamp(extras.aiTools || [], (t) => t.updated_at || t.created_at);
+  const latestTimelineIso = maxIsoTimestamp(extras.timelines || [], (tl) => tl.updated_at || tl.created_at);
+  const latestBriefingIso = toIsoTimestamp(extras.latestBriefingAt);
+
+  const catLastmodById = new Map();
+  for (const post of posts || []) {
+    if (!post.category_id) continue;
+    const iso = toIsoTimestamp(post.updated_at || post.published_at || post.created_at);
+    if (!iso) continue;
+    const prev = catLastmodById.get(post.category_id) || '';
+    if (iso > prev) catLastmodById.set(post.category_id, iso);
+  }
 
   const staticPages = [
-    { path: '/', priority: '1.0', changefreq: 'hourly' },
-    { path: '/videos', priority: '0.85', changefreq: 'daily' },
-    { path: '/ai-tools', priority: '0.85', changefreq: 'daily' },
-    { path: '/briefing', priority: '0.85', changefreq: 'daily' },
-    { path: '/timelines', priority: '0.8', changefreq: 'daily' },
-    { path: '/about', priority: '0.5', changefreq: 'monthly' },
-    { path: '/contact', priority: '0.5', changefreq: 'monthly' },
-    { path: '/editorial-policy', priority: '0.5', changefreq: 'monthly' },
-    { path: '/privacy-policy', priority: '0.3', changefreq: 'yearly' },
-    { path: '/terms', priority: '0.3', changefreq: 'yearly' },
-    { path: '/disclaimer', priority: '0.3', changefreq: 'yearly' }
+    { path: '/', lastmod: latestPostIso },
+    { path: '/videos', lastmod: latestVideoIso || latestPostIso },
+    { path: '/ai-tools', lastmod: latestAiToolIso },
+    { path: '/briefing', lastmod: latestBriefingIso },
+    { path: '/timelines', lastmod: latestTimelineIso },
+    { path: '/about', lastmod: '' },
+    { path: '/contact', lastmod: '' },
+    { path: '/editorial-policy', lastmod: '' },
+    { path: '/privacy-policy', lastmod: '' },
+    { path: '/terms', lastmod: '' },
+    { path: '/disclaimer', lastmod: '' }
   ];
 
   const lines = [
@@ -272,52 +309,55 @@ export function buildSitemapXml(siteUrl, posts, categories, tags, extras = {}) {
   for (const page of staticPages) {
     lines.push('  <url>');
     lines.push(`    <loc>${escapeXml(`${base}${page.path}`)}</loc>`);
-    lines.push(`    <lastmod>${nowIso}</lastmod>`);
-    lines.push(`    <changefreq>${page.changefreq}</changefreq>`);
-    lines.push(`    <priority>${page.priority}</priority>`);
+    if (page.lastmod) {
+      lines.push(`    <lastmod>${page.lastmod}</lastmod>`);
+    }
     lines.push('  </url>');
   }
 
   for (const cat of categories) {
+    const catLastmod = catLastmodById.get(cat.id) || toIsoTimestamp(cat.created_at);
     lines.push('  <url>');
     lines.push(`    <loc>${escapeXml(`${base}/category/${cat.slug}`)}</loc>`);
-    lines.push(`    <lastmod>${nowIso}</lastmod>`);
-    lines.push(`    <changefreq>daily</changefreq>`);
-    lines.push(`    <priority>0.8</priority>`);
+    if (catLastmod) {
+      lines.push(`    <lastmod>${catLastmod}</lastmod>`);
+    }
     lines.push('  </url>');
   }
 
   for (const tag of tags) {
     lines.push('  <url>');
     lines.push(`    <loc>${escapeXml(`${base}/tag/${tag.slug}`)}</loc>`);
-    lines.push(`    <changefreq>weekly</changefreq>`);
-    lines.push(`    <priority>0.6</priority>`);
     lines.push('  </url>');
   }
 
   for (const tool of extras.aiTools || []) {
+    const toolLastmod = toIsoTimestamp(tool.updated_at || tool.created_at);
     lines.push('  <url>');
     lines.push(`    <loc>${escapeXml(`${base}/ai-tools/${tool.slug}`)}</loc>`);
-    lines.push(`    <changefreq>weekly</changefreq>`);
-    lines.push(`    <priority>0.75</priority>`);
+    if (toolLastmod) {
+      lines.push(`    <lastmod>${toolLastmod}</lastmod>`);
+    }
     lines.push('  </url>');
   }
 
   for (const tl of extras.timelines || []) {
+    const tlLastmod = toIsoTimestamp(tl.updated_at || tl.created_at);
     lines.push('  <url>');
     lines.push(`    <loc>${escapeXml(`${base}/timeline/${tl.slug}`)}</loc>`);
-    lines.push(`    <changefreq>daily</changefreq>`);
-    lines.push(`    <priority>0.75</priority>`);
+    if (tlLastmod) {
+      lines.push(`    <lastmod>${tlLastmod}</lastmod>`);
+    }
     lines.push('  </url>');
   }
 
   for (const post of posts) {
-    const lastmod = new Date(post.updated_at || post.published_at || post.created_at).toISOString();
+    const lastmod = toIsoTimestamp(post.updated_at || post.published_at || post.created_at);
     lines.push('  <url>');
     lines.push(`    <loc>${escapeXml(`${base}/article/${post.slug}`)}</loc>`);
-    lines.push(`    <lastmod>${lastmod}</lastmod>`);
-    lines.push(`    <changefreq>weekly</changefreq>`);
-    lines.push(`    <priority>${post.is_featured ? '0.95' : '0.85'}</priority>`);
+    if (lastmod) {
+      lines.push(`    <lastmod>${lastmod}</lastmod>`);
+    }
     if (post.featured_image) {
       const imgUrl = absoluteUrl(base, post.featured_image);
       const imgTitle = post.featured_image_title || post.meta_title || post.title;
@@ -368,6 +408,7 @@ export function buildRssXml(siteUrl, posts, settings) {
   const base = String(siteUrl || 'https://techhavenus.com').replace(/\/+$/, '');
   const siteName = settings.site_name || 'TechHaven US';
   const tagline = settings.site_tagline || 'Breaking US & Europe Tech, AI, Gaming & Practical Guides';
+  const latestIso = maxIsoTimestamp(posts, (p) => p.updated_at || p.published_at || p.created_at);
 
   const lines = [
     '<?xml version="1.0" encoding="UTF-8"?>',
@@ -377,6 +418,8 @@ export function buildRssXml(siteUrl, posts, settings) {
     `    <link>${escapeXml(base)}/</link>`,
     `    <description>${escapeXml(tagline)}</description>`,
     '    <language>en-us</language>',
+    ...(latestIso ? [`    <lastBuildDate>${new Date(latestIso).toUTCString()}</lastBuildDate>`] : []),
+    '    <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub" />',
     `    <atom:link href="${escapeXml(base)}/rss.xml" rel="self" type="application/rss+xml" />`
   ];
 
@@ -417,6 +460,7 @@ export function buildRobotsTxt(siteUrl, customRules = '') {
     lines.push('');
   }
   lines.push(`Sitemap: ${base}/sitemap.xml`);
+  lines.push(`Sitemap: ${base}/rss.xml`);
   return lines.join('\n');
 }
 

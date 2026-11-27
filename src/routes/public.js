@@ -2,6 +2,7 @@ import express from 'express';
 import { db, publishDueScheduledPosts, safeJsonParse } from '../db/database.js';
 import { answerArticleQuestion } from '../utils/aiAssistant.js';
 import { pageCache } from '../utils/cache.js';
+import { ensureIndexNowKey, WEBSUB_HUB_URL } from '../utils/indexer.js';
 import { injectMidArticleAd } from '../utils/markdown.js';
 import {
   generateSubscriberTokens,
@@ -1199,10 +1200,23 @@ router.get('/newsletter/unsubscribe', async (req, res) => {
   });
 });
 
+// Serve IndexNow dynamic key verification file (/<32-char-hex>.txt)
+router.use((req, res, next) => {
+  if (req.method === 'GET' && /^\/([a-f0-9]{32})\.txt$/i.test(req.path)) {
+    const requestedKey = req.path.slice(1, -4).toLowerCase();
+    const activeKey = ensureIndexNowKey().toLowerCase();
+    if (requestedKey === activeKey) {
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      return res.type('text/plain; charset=utf-8').send(activeKey);
+    }
+  }
+  next();
+});
+
 router.get('/sitemap.xml', withCache(CACHE_15M, 'application/xml; charset=utf-8'), (req, res) => {
   const { siteUrl, categories } = res.locals;
   const posts = db.prepare(`
-    SELECT slug, title, excerpt, meta_title, featured_image, featured_image_title, featured_image_caption, featured_image_description, featured_image_alt, is_featured, published_at, updated_at, created_at
+    SELECT slug, title, excerpt, meta_title, category_id, video_url, featured_image, featured_image_title, featured_image_caption, featured_image_description, featured_image_alt, is_featured, published_at, updated_at, created_at
     FROM posts
     WHERE status = 'published'
     ORDER BY published_at DESC
@@ -1212,24 +1226,30 @@ router.get('/sitemap.xml', withCache(CACHE_15M, 'application/xml; charset=utf-8'
     JOIN post_tags pt ON pt.tag_id = t.id
     JOIN posts p ON p.id = pt.post_id AND p.status = 'published'
   `).all();
-  const aiTools = db.prepare('SELECT slug FROM ai_tools').all();
-  const timelines = db.prepare("SELECT slug FROM timelines WHERE status = 'published'").all();
+  const aiTools = db.prepare('SELECT slug, updated_at, created_at FROM ai_tools').all();
+  const timelines = db.prepare("SELECT slug, updated_at, created_at FROM timelines WHERE status = 'published'").all();
+  const latestBriefing = db.prepare("SELECT created_at FROM daily_briefings WHERE status = 'published' ORDER BY briefing_date DESC LIMIT 1").get();
 
-  const xml = buildSitemapXml(siteUrl, posts, categories, tags, { aiTools, timelines });
+  const xml = buildSitemapXml(siteUrl, posts, categories, tags, {
+    aiTools,
+    timelines,
+    latestBriefingAt: latestBriefing?.created_at || ''
+  });
   res.type('application/xml; charset=utf-8').send(xml);
 });
 
 router.get(['/rss.xml', '/feed.xml'], withCache(CACHE_15M, 'application/rss+xml; charset=utf-8'), (req, res) => {
   const { settings, siteUrl } = res.locals;
   const posts = db.prepare(`
-    SELECT p.slug, p.title, p.meta_title, p.meta_description, p.excerpt, p.featured_image, p.published_at, p.created_at,
+    SELECT p.slug, p.title, p.meta_title, p.meta_description, p.excerpt, p.featured_image, p.published_at, p.updated_at, p.created_at,
            c.name AS category_name
     FROM posts p
     LEFT JOIN categories c ON c.id = p.category_id
     WHERE p.status = 'published'
     ORDER BY p.published_at DESC
-    LIMIT 30
+    LIMIT 50
   `).all();
+  res.setHeader('Link', `<${WEBSUB_HUB_URL}>; rel="hub", <${siteUrl}/rss.xml>; rel="self"`);
   const xml = buildRssXml(siteUrl, posts, settings);
   res.type('application/rss+xml; charset=utf-8').send(xml);
 });

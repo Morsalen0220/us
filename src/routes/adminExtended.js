@@ -4,7 +4,8 @@ import { verifyCsrf } from '../middleware/authMiddleware.js';
 import { clearLoginLockouts, hashPassword } from '../utils/auth.js';
 import { createDatabaseBackup, getBackupPath, listBackups } from '../utils/backup.js';
 import { pageCache } from '../utils/cache.js';
-import { triggerSelectiveSectionPurge } from '../utils/cloudflare.js';
+import { purgeCloudflareUrls, triggerSelectiveSectionPurge } from '../utils/cloudflare.js';
+import { ensureIndexNowKey, getLastIndexingReport, notifySearchEngines, WEBSUB_HUB_URL } from '../utils/indexer.js';
 import { ensureVapidKeys, sendBreakingPushNotification } from '../utils/push.js';
 import { extractLinksFromMarkdown, slugify, validatePostSchema } from '../utils/seo.js';
 import { generateDraftSocialPosts, publishSocialPost } from '../utils/social.js';
@@ -190,9 +191,33 @@ router.get('/seo-tools', (req, res) => {
     adminPage: 'seo-tools',
     redirects,
     audits,
+    indexNowKey: ensureIndexNowKey(),
+    indexingReport: getLastIndexingReport(),
+    websubHubUrl: WEBSUB_HUB_URL,
     flash: req.query.msg || null,
     error: req.query.err || null
   });
+});
+
+router.post('/seo-tools/ping-search', verifyCsrf, async (req, res) => {
+  try {
+    const base = res.locals.siteUrl;
+    const latestPosts = db.prepare(`
+      SELECT slug FROM posts WHERE status = 'published' ORDER BY published_at DESC LIMIT 5
+    `).all();
+    const urls = [
+      `${base}/`,
+      `${base}/sitemap.xml`,
+      ...latestPosts.map((p) => `${base}/article/${p.slug}`)
+    ];
+    await purgeCloudflareUrls([`${base}/sitemap.xml`, `${base}/rss.xml`]).catch(() => {});
+    const report = await notifySearchEngines(urls, base);
+    const wsOk = report.websub?.ok ? `Google WebSub OK (${report.websub.status})` : (report.websub?.note || report.websub?.error || 'WebSub check URL');
+    const inOk = report.indexNow?.ok ? `IndexNow OK (${report.indexNow.count} URLs)` : (report.indexNow?.note || report.indexNow?.error || 'IndexNow check');
+    return res.redirect(`/admin/seo-tools?msg=${encodeURIComponent(`Search engines notified — ${wsOk} | ${inOk}`)}`);
+  } catch (err) {
+    return res.redirect(`/admin/seo-tools?err=${encodeURIComponent(err?.message || 'Failed to notify search engines')}`);
+  }
 });
 
 router.post('/seo-tools/redirects', verifyCsrf, (req, res) => {

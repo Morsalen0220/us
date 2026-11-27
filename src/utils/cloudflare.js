@@ -1,5 +1,6 @@
 import { db, getAllSettings } from '../db/database.js';
 import { SITE_URL } from '../config.js';
+import { notifySearchEngines } from './indexer.js';
 import { slugify } from './seo.js';
 
 const CF_MAX_FILES_PER_CALL = 30;
@@ -115,32 +116,39 @@ export function collectUrlsForPostRecord(post, baseUrl) {
 export function triggerSelectivePostPurge({ postId = null, oldPost = null } = {}) {
   try {
     const cfg = getCloudflareConfig();
-    if (!cfg.configured || !cfg.autoPurge) return;
-
     const currentPost = postId ? db.prepare('SELECT * FROM posts WHERE id = ? LIMIT 1').get(postId) : null;
-    // Only purge public cache if the new state OR previous state was published
-    const wasPublished = oldPost && oldPost.status === 'published';
-    const isPublished = currentPost && currentPost.status === 'published';
+    const wasPublished = Boolean(oldPost && oldPost.status === 'published');
+    const isPublished = Boolean(currentPost && currentPost.status === 'published');
     if (!wasPublished && !isPublished) return;
 
-    const urls = [
-      ...collectUrlsForPostRecord(currentPost, cfg.baseUrl),
-      ...(wasPublished ? collectUrlsForPostRecord(oldPost, cfg.baseUrl) : [])
-    ];
+    const currentUrls = isPublished ? collectUrlsForPostRecord(currentPost, cfg.baseUrl) : [];
+    const oldUrls = wasPublished ? collectUrlsForPostRecord(oldPost, cfg.baseUrl) : [];
+    const allPurgeUrls = [...currentUrls, ...oldUrls];
+    const indexUrls = isPublished ? currentUrls : oldUrls;
 
-    purgeCloudflareUrls(urls, cfg).catch((err) => {
-      console.warn('[Cloudflare Purge Warning]', err?.message || err);
-    });
+    const runIndexing = () => {
+      notifySearchEngines(indexUrls, cfg.baseUrl).catch((err) => {
+        console.warn('[Auto Indexing Warning]', err?.message || err);
+      });
+    };
+
+    if (cfg.configured && cfg.autoPurge) {
+      purgeCloudflareUrls(allPurgeUrls, cfg)
+        .catch((err) => {
+          console.warn('[Cloudflare Purge Warning]', err?.message || err);
+        })
+        .finally(runIndexing);
+    } else {
+      runIndexing();
+    }
   } catch (err) {
-    console.warn('[Cloudflare Purge Error]', err?.message || err);
+    console.warn('[Cloudflare/Indexing Trigger Error]', err?.message || err);
   }
 }
 
 export function triggerSelectiveSectionPurge(paths = ['/']) {
   try {
     const cfg = getCloudflareConfig();
-    if (!cfg.configured || !cfg.autoPurge) return;
-
     const base = cfg.baseUrl;
     const urls = [
       `${base}/`,
@@ -149,10 +157,22 @@ export function triggerSelectiveSectionPurge(paths = ['/']) {
       ...paths.map((p) => (p.startsWith('http') ? p : `${base}${p.startsWith('/') ? p : `/${p}`}`))
     ];
 
-    purgeCloudflareUrls(urls, cfg).catch((err) => {
-      console.warn('[Cloudflare Section Purge Warning]', err?.message || err);
-    });
+    const runIndexing = () => {
+      notifySearchEngines(urls, base).catch((err) => {
+        console.warn('[Auto Section Indexing Warning]', err?.message || err);
+      });
+    };
+
+    if (cfg.configured && cfg.autoPurge) {
+      purgeCloudflareUrls(urls, cfg)
+        .catch((err) => {
+          console.warn('[Cloudflare Section Purge Warning]', err?.message || err);
+        })
+        .finally(runIndexing);
+    } else {
+      runIndexing();
+    }
   } catch (err) {
-    console.warn('[Cloudflare Section Purge Error]', err?.message || err);
+    console.warn('[Cloudflare Section Trigger Error]', err?.message || err);
   }
 }
