@@ -15,7 +15,7 @@ const DEFAULT_SETTINGS = {
   privacy_email: 'privacy@techhavenus.com',
   twitter_handle: '@techhavenus',
   publisher_legal_name: 'TechHaven US',
-  publisher_owner_name: 'Alex Mercer (Founder & Managing Editor)',
+  publisher_owner_name: 'Md Apple Mahmud (Founder & Managing Tech Editor)',
   publisher_street_address: '',
   publisher_city: 'New York',
   publisher_state: 'NY',
@@ -876,37 +876,86 @@ function seedBriefingsAndTimelines() {
   }
 }
 
+const PRIMARY_AUTHOR = {
+  name: 'Md Apple Mahmud',
+  slug: 'md-apple-mahmud',
+  jobTitle: 'Founder & Managing Tech Editor',
+  location: 'US & Global Tech Desk',
+  credentials: 'Managing Tech Editor • Full-Stack Cloud & Web Developer • AI, Software & Hardware Analyst',
+  expertise:
+    'Artificial Intelligence & AI Tools, Technology News, Gadgets & Consumer Hardware, Software & Apps, Cybersecurity & Privacy, PC & Console Gaming, Reviews & Comparisons, How-To Guides & Tutorials, Future Technology, Cloud & Web Development',
+  bio:
+    'Md Apple Mahmud is the Founder and Managing Tech Editor of TechHaven US. Drawing on hands-on experience in cloud and web development, AI workflow testing, and daily software troubleshooting, he leads coverage across all ten TechHaven desks—spanning Artificial Intelligence, Technology News, Gadgets & Devices, Software & Apps (Windows, macOS, Android, and iOS), Cybersecurity, PC & Console Gaming (including GTA 5 and GTA 6), Product Reviews & Side-by-Side Comparisons, Future Technology, and practical step-by-step How-To Guides. Every article, comparison, and tutorial is verified against official vendor documentation, hardware specifications, security advisories, and primary release notes before publication.',
+  websiteUrl: SITE_URL
+};
+
 export async function seedDatabase() {
   const existingUsers = db.prepare('SELECT COUNT(*) AS count FROM users').get().count;
 
   if (existingUsers === 0) {
     db.prepare(`
       INSERT INTO users (name, slug, email, password_hash, role, job_title, expertise, bio, twitter_handle, linkedin_url, website_url, location, credentials)
-      VALUES (?, ?, ?, ?, 'admin', ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, 'admin', ?, ?, ?, '', '', ?, ?, ?)
     `).run(
-      'Alex Mercer',
-      'alex-mercer',
+      PRIMARY_AUTHOR.name,
+      PRIMARY_AUTHOR.slug,
       ADMIN_EMAIL,
       hashPassword(ADMIN_PASSWORD),
-      'Editor-in-Chief',
-      'AI Systems, Silicon Benchmarks, Rockstar Games, Web Performance',
-      'Senior Technology & Gaming Editor at TechHaven US. Covering AI systems, silicon benchmarks, Rockstar Games, and high-speed web architecture across North America and Europe.',
-      '@alexmercertech',
-      'https://www.linkedin.com/in/alexmercertech',
-      `${SITE_URL}/author/alex-mercer`,
-      'San Francisco, CA, USA',
-      'B.S. Computer Science • 10+ years covering US/EU silicon, AI & gaming'
+      PRIMARY_AUTHOR.jobTitle,
+      PRIMARY_AUTHOR.expertise,
+      PRIMARY_AUTHOR.bio,
+      PRIMARY_AUTHOR.websiteUrl,
+      PRIMARY_AUTHOR.location,
+      PRIMARY_AUTHOR.credentials
     );
+    setSetting('author_profile_migrated_v1', '1');
   } else {
-    db.prepare(`
-      UPDATE users SET
-        job_title = CASE WHEN job_title = '' THEN 'Editor-in-Chief' ELSE job_title END,
-        expertise = CASE WHEN expertise = '' THEN 'AI Systems, Silicon Benchmarks, Rockstar Games, Web Performance' ELSE expertise END,
-        location = CASE WHEN location = '' THEN 'San Francisco, CA, USA' ELSE location END,
-        credentials = CASE WHEN credentials = '' THEN 'B.S. Computer Science • 10+ years covering US/EU silicon, AI & gaming' ELSE credentials END,
-        linkedin_url = CASE WHEN linkedin_url = '' THEN 'https://www.linkedin.com/in/alexmercertech' ELSE linkedin_url END
-      WHERE id = 1
-    `).run();
+    const migratedRow = db.prepare("SELECT value FROM settings WHERE key = 'author_profile_migrated_v1'").get();
+    const primaryUser = db.prepare("SELECT * FROM users WHERE id = 1 OR slug = 'alex-mercer' ORDER BY id ASC LIMIT 1").get();
+    if (primaryUser && (!migratedRow || migratedRow.value !== '1' || primaryUser.slug === 'alex-mercer' || primaryUser.name === 'Alex Mercer')) {
+      const oldSlug = primaryUser.slug;
+      const cleanTwitter = primaryUser.twitter_handle === '@alexmercertech' ? '' : (primaryUser.twitter_handle || '');
+      const cleanLinkedin = String(primaryUser.linkedin_url || '').includes('alexmercertech') ? '' : (primaryUser.linkedin_url || '');
+      db.prepare(`
+        UPDATE users SET
+          name = ?,
+          slug = ?,
+          job_title = ?,
+          expertise = ?,
+          bio = ?,
+          location = ?,
+          credentials = ?,
+          twitter_handle = ?,
+          linkedin_url = ?,
+          website_url = ?
+        WHERE id = ?
+      `).run(
+        PRIMARY_AUTHOR.name,
+        PRIMARY_AUTHOR.slug,
+        PRIMARY_AUTHOR.jobTitle,
+        PRIMARY_AUTHOR.expertise,
+        PRIMARY_AUTHOR.bio,
+        PRIMARY_AUTHOR.location,
+        PRIMARY_AUTHOR.credentials,
+        cleanTwitter,
+        cleanLinkedin,
+        PRIMARY_AUTHOR.websiteUrl,
+        primaryUser.id
+      );
+
+      if (oldSlug && oldSlug !== PRIMARY_AUTHOR.slug) {
+        db.prepare(`
+          INSERT INTO redirects (from_path, to_path, status_code) VALUES (?, ?, 301)
+          ON CONFLICT(from_path) DO UPDATE SET to_path = excluded.to_path, status_code = 301
+        `).run(`/author/${oldSlug}`, `/author/${PRIMARY_AUTHOR.slug}`);
+      }
+      setSetting('author_profile_migrated_v1', '1');
+    }
+
+    const ownerSetting = db.prepare("SELECT value FROM settings WHERE key = 'publisher_owner_name'").get();
+    if (!ownerSetting || String(ownerSetting.value || '').includes('Alex Mercer')) {
+      setSetting('publisher_owner_name', 'Md Apple Mahmud (Founder & Managing Tech Editor)');
+    }
   }
 
   // Ensure secondary editorial team members exist for multi-author workflow

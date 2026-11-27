@@ -1230,10 +1230,17 @@ router.get('/sitemap.xml', withCache(CACHE_15M, 'application/xml; charset=utf-8'
   const aiTools = db.prepare('SELECT slug, updated_at, created_at FROM ai_tools').all();
   const timelines = db.prepare("SELECT slug, updated_at, created_at FROM timelines WHERE status = 'published'").all();
   const latestBriefing = db.prepare("SELECT created_at FROM daily_briefings WHERE status = 'published' ORDER BY briefing_date DESC LIMIT 1").get();
+  const authors = db.prepare(`
+    SELECT u.slug, u.created_at, MAX(p.updated_at) AS latest_post_at
+    FROM users u
+    JOIN posts p ON p.author_id = u.id AND p.status = 'published'
+    GROUP BY u.id
+  `).all();
 
   const xml = buildSitemapXml(siteUrl, posts, categories, tags, {
     aiTools,
     timelines,
+    authors,
     latestBriefingAt: latestBriefing?.created_at || ''
   });
   res.type('application/xml; charset=utf-8').send(xml);

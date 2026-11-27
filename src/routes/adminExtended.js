@@ -77,6 +77,11 @@ router.post('/users/:id/role', requireRole('admin'), verifyCsrf, (req, res) => {
 
   const role = ['admin', 'editor', 'author'].includes(req.body.role) ? req.body.role : existing.role;
   const name = String(req.body.name || existing.name).trim() || existing.name;
+  const candidateSlug = slugify(name);
+  const slugConflict = candidateSlug !== existing.slug
+    ? db.prepare('SELECT id FROM users WHERE slug = ? AND id != ?').get(candidateSlug, id)
+    : null;
+  const nextSlug = slugConflict ? `${candidateSlug}-${id}` : candidateSlug;
   const email = String(req.body.email || existing.email).trim().toLowerCase() || existing.email;
   const jobTitle = req.body.job_title !== undefined ? String(req.body.job_title).trim() : existing.job_title;
   const expertise = req.body.expertise !== undefined ? String(req.body.expertise).trim() : existing.expertise;
@@ -95,11 +100,18 @@ router.post('/users/:id/role', requireRole('admin'), verifyCsrf, (req, res) => {
   try {
     db.prepare(`
       UPDATE users SET
-        name = ?, email = ?, role = ?, job_title = ?, expertise = ?,
+        name = ?, slug = ?, email = ?, role = ?, job_title = ?, expertise = ?,
         location = ?, credentials = ?, bio = ?, twitter_handle = ?,
         linkedin_url = ?, website_url = ?
       WHERE id = ?
-    `).run(name, email, role, jobTitle, expertise, location, credentials, bio, twitterHandle, linkedinUrl, websiteUrl, id);
+    `).run(name, nextSlug, email, role, jobTitle, expertise, location, credentials, bio, twitterHandle, linkedinUrl, websiteUrl, id);
+
+    if (existing.slug && existing.slug !== nextSlug) {
+      db.prepare(`
+        INSERT INTO redirects (from_path, to_path, status_code) VALUES (?, ?, 301)
+        ON CONFLICT(from_path) DO UPDATE SET to_path = excluded.to_path, status_code = 301
+      `).run(`/author/${existing.slug}`, `/author/${nextSlug}`);
+    }
 
     if (newPassword) {
       if (newPassword.length < 8) {

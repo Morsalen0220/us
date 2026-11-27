@@ -14,7 +14,7 @@
 
     <div style="background:var(--surface-alt);border:1px solid var(--border);border-radius:12px;padding:1rem 1.2rem;margin-bottom:1.5rem;font-size:0.9rem;">
       <div style="font-weight:800;margin-bottom:0.35rem;">Contact Information</div>
-      <div><strong><%= settings.publisher_legal_name || 'TechHaven US' %></strong> • <%= settings.publisher_owner_name || 'Alex Mercer' %></div>
+      <div><strong><%= settings.publisher_legal_name || 'TechHaven US' %></strong> • <%= settings.publisher_owner_name || 'Md Apple Mahmud' %></div>
       <div>Location: <%= [settings.publisher_street_address, settings.publisher_city || 'New York', [settings.publisher_state || 'NY', settings.publisher_postal_code].filter(Boolean).join(' '), settings.publisher_country || 'United States'].filter(Boolean).join(', ') %></div>
       <div style="margin-top:0.3rem;">
         General: <a href="mailto:<%= settings.contact_email || 'contact@techhavenus.com' %>" style="color:var(--accent);"><%= settings.contact_email || 'contact@techhavenus.com' %></a> •

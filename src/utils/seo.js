@@ -70,7 +70,7 @@ export function buildOrganizationJsonLd(settings) {
   const siteUrl = (settings.site_url || 'https://techhavenus.com').replace(/\/+$/, '');
   const siteName = settings.site_name || 'TechHaven US';
   const legalName = settings.publisher_legal_name || 'TechHaven US';
-  const ownerName = settings.publisher_owner_name || 'Alex Mercer';
+  const ownerName = settings.publisher_owner_name || 'Md Apple Mahmud';
 
   return {
     '@context': 'https://schema.org',
@@ -328,6 +328,16 @@ export function buildSitemapXml(siteUrl, posts, categories, tags, extras = {}) {
   for (const tag of tags) {
     lines.push('  <url>');
     lines.push(`    <loc>${escapeXml(`${base}/tag/${tag.slug}`)}</loc>`);
+    lines.push('  </url>');
+  }
+
+  for (const author of extras.authors || []) {
+    const authorLastmod = toIsoTimestamp(author.latest_post_at || author.created_at);
+    lines.push('  <url>');
+    lines.push(`    <loc>${escapeXml(`${base}/author/${author.slug}`)}</loc>`);
+    if (authorLastmod) {
+      lines.push(`    <lastmod>${authorLastmod}</lastmod>`);
+    }
     lines.push('  </url>');
   }
 

@@ -32,7 +32,7 @@
     <h2 id="ownership">Site Information &amp; Contact</h2>
     <div style="background:var(--surface-alt);border:1px solid var(--border);border-radius:12px;padding:1rem 1.2rem;font-size:0.94rem;">
       <p style="margin:0 0 0.45rem;"><strong>Publisher / Brand:</strong> <%= settings.publisher_legal_name || 'TechHaven US' %></p>
-      <p style="margin:0 0 0.45rem;"><strong>Founder &amp; Editor:</strong> <%= settings.publisher_owner_name || 'Alex Mercer' %></p>
+      <p style="margin:0 0 0.45rem;"><strong>Founder &amp; Editor:</strong> <%= settings.publisher_owner_name || 'Md Apple Mahmud' %></p>
       <p style="margin:0 0 0.45rem;"><strong>Location:</strong> <%= [settings.publisher_street_address, settings.publisher_city || 'New York', [settings.publisher_state || 'NY', settings.publisher_postal_code].filter(Boolean).join(' '), settings.publisher_country || 'United States'].filter(Boolean).join(', ') %></p>
       <% if (settings.publisher_phone) { %><p style="margin:0 0 0.45rem;"><strong>Phone:</strong> <%= settings.publisher_phone %></p><% } %>
       <p style="margin:0;"><strong>General Contact:</strong> <a href="mailto:<%= settings.contact_email || 'contact@techhavenus.com' %>"><%= settings.contact_email || 'contact@techhavenus.com' %></a> • <strong>Editorial:</strong> <a href="mailto:editorial@techhavenus.com">editorial@techhavenus.com</a> • <strong>Privacy &amp; GDPR:</strong> <a href="mailto:<%= settings.privacy_email || 'privacy@techhavenus.com' %>"><%= settings.privacy_email || 'privacy@techhavenus.com' %></a></p>

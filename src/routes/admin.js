@@ -371,7 +371,7 @@ function renderAdminArticlePreview(req, res, previewPostData) {
     category_slug: cat?.slug || null,
     category_color: cat?.accent_color || '#2563EB',
     author_name: author?.name || req.user?.name || 'TechHaven Editorial',
-    author_slug: author?.slug || 'alex-mercer',
+    author_slug: author?.slug || 'md-apple-mahmud',
     author_job_title: author?.job_title || '',
     author_expertise: author?.expertise || '',
     author_bio: author?.bio || '',
