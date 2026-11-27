@@ -13,6 +13,8 @@ db.exec(`
   PRAGMA synchronous = NORMAL;
   PRAGMA foreign_keys = ON;
   PRAGMA busy_timeout = 5000;
+  PRAGMA cache_size = -32000;
+  PRAGMA temp_store = MEMORY;
 `);
 
 db.exec(`
@@ -484,6 +486,7 @@ runMigrations();
 
 db.exec(`
   CREATE INDEX IF NOT EXISTS idx_posts_status_pub ON posts(status, published_at DESC);
+  CREATE INDEX IF NOT EXISTS idx_posts_breaking_trending ON posts(status, is_trending DESC, is_breaking DESC, published_at DESC);
   CREATE INDEX IF NOT EXISTS idx_posts_category_status ON posts(category_id, status);
   CREATE INDEX IF NOT EXISTS idx_posts_region_status ON posts(region, status);
   CREATE INDEX IF NOT EXISTS idx_posts_slug ON posts(slug);
@@ -537,20 +540,45 @@ export function safeJsonParse(str, fallback) {
   }
 }
 
+let cachedSettings = null;
+let cachedRedirectMap = null;
+
+const stmtAllSettings = db.prepare('SELECT key, value FROM settings');
+const stmtUpsertSetting = db.prepare(`
+  INSERT INTO settings (key, value) VALUES (?, ?)
+  ON CONFLICT(key) DO UPDATE SET value = excluded.value
+`);
+const stmtAllRedirects = db.prepare('SELECT id, from_path, to_path, status_code FROM redirects');
+
+pageCache.onClear(() => {
+  cachedSettings = null;
+  cachedRedirectMap = null;
+});
+
 export function getAllSettings() {
-  const rows = db.prepare('SELECT key, value FROM settings').all();
+  if (cachedSettings !== null) return cachedSettings;
+  const rows = stmtAllSettings.all();
   const out = {};
   for (const row of rows) {
     out[row.key] = row.value;
   }
+  cachedSettings = out;
   return out;
 }
 
 export function setSetting(key, value) {
-  db.prepare(`
-    INSERT INTO settings (key, value) VALUES (?, ?)
-    ON CONFLICT(key) DO UPDATE SET value = excluded.value
-  `).run(String(key), String(value ?? ''));
+  stmtUpsertSetting.run(String(key), String(value ?? ''));
+  cachedSettings = null;
+}
+
+export function getRedirectMap() {
+  if (cachedRedirectMap !== null) return cachedRedirectMap;
+  const map = new Map();
+  for (const row of stmtAllRedirects.all()) {
+    map.set(row.from_path, row);
+  }
+  cachedRedirectMap = map;
+  return map;
 }
 
 export function syncPostTags(postId, metaTagsString = '') {

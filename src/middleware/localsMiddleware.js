@@ -1,8 +1,29 @@
 import { db, getAllSettings, safeJsonParse } from '../db/database.js';
 import { SITE_URL } from '../config.js';
 import { parseCookies } from '../utils/auth.js';
+import { pageCache } from '../utils/cache.js';
 import { renderIcon } from '../utils/icons.js';
 import { resolveAssetUrl } from '../utils/storage.js';
+
+const META_TTL_MS = 20 * 60_000;
+const KEY_CATEGORIES = '__meta:categories';
+const KEY_BREAKING = '__meta:breaking';
+
+const stmtCategories = db.prepare(`
+  SELECT c.*,
+    (SELECT COUNT(*) FROM posts p WHERE p.category_id = c.id AND p.status = 'published') AS post_count
+  FROM categories c
+  ORDER BY c.sort_order ASC, c.name ASC
+`);
+
+const stmtBreakingPosts = db.prepare(`
+  SELECT p.title, p.slug, c.name AS category_name, c.accent_color AS category_color
+  FROM posts p
+  LEFT JOIN categories c ON c.id = p.category_id
+  WHERE p.status = 'published'
+  ORDER BY p.is_trending DESC, p.is_breaking DESC, p.published_at DESC
+  LIMIT 6
+`);
 
 function formatDate(isoString) {
   if (!isoString) return '';
@@ -51,22 +72,24 @@ export const REGIONS = [
 export function localsMiddleware(req, res, next) {
   const settings = getAllSettings();
   const siteUrl = (settings.site_url || SITE_URL || 'https://techhavenus.com').replace(/\/+$/, '');
+  const isApi = req.path.startsWith('/api/') || req.path === '/api';
 
-  const categories = db.prepare(`
-    SELECT c.*,
-      (SELECT COUNT(*) FROM posts p WHERE p.category_id = c.id AND p.status = 'published') AS post_count
-    FROM categories c
-    ORDER BY c.sort_order ASC, c.name ASC
-  `).all();
+  let categories = [];
+  let breakingPosts = [];
 
-  const breakingPosts = db.prepare(`
-    SELECT p.title, p.slug, c.name AS category_name, c.accent_color AS category_color
-    FROM posts p
-    LEFT JOIN categories c ON c.id = p.category_id
-    WHERE p.status = 'published'
-    ORDER BY p.is_trending DESC, p.is_breaking DESC, p.published_at DESC
-    LIMIT 6
-  `).all();
+  if (!isApi) {
+    categories = pageCache.get(KEY_CATEGORIES);
+    if (categories === null) {
+      categories = stmtCategories.all();
+      pageCache.set(KEY_CATEGORIES, categories, META_TTL_MS);
+    }
+
+    breakingPosts = pageCache.get(KEY_BREAKING);
+    if (breakingPosts === null) {
+      breakingPosts = stmtBreakingPosts.all();
+      pageCache.set(KEY_BREAKING, breakingPosts, META_TTL_MS);
+    }
+  }
 
   const cookies = parseCookies(req);
   const userPrefs = safeJsonParse(cookies.th_prefs || '', { categories: [], regions: [] });

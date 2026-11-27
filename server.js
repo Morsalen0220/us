@@ -3,7 +3,7 @@ import express from 'express';
 import compression from 'compression';
 import helmet from 'helmet';
 import { LISTEN_TARGET, NODE_ENV, PUBLIC_DIR, SITE_URL, UPLOAD_DIR, VIEWS_DIR } from './src/config.js';
-import { db, logServerError, onScheduledPostsPublished, publishDueScheduledPosts } from './src/db/database.js';
+import { db, getRedirectMap, logServerError, onScheduledPostsPublished, publishDueScheduledPosts } from './src/db/database.js';
 import { seedDatabase } from './src/db/seed.js';
 import { attachAuth } from './src/middleware/authMiddleware.js';
 import { localsMiddleware } from './src/middleware/localsMiddleware.js';
@@ -86,15 +86,20 @@ app.use((req, res, next) => {
   next();
 });
 
-// Dynamic 301/302 Redirect Manager middleware
+// Dynamic 301/302 Redirect Manager middleware (O(1) in-memory map lookup)
+const stmtIncrementRedirectHit = db.prepare('UPDATE redirects SET hits = hits + 1 WHERE id = ?');
 app.use((req, res, next) => {
   if (req.method !== 'GET' || req.path.startsWith('/admin') || req.path.startsWith('/api/')) {
     return next();
   }
   const normalized = req.path.length > 1 ? req.path.replace(/\/+$/, '') : req.path;
-  const redir = db.prepare('SELECT id, to_path, status_code FROM redirects WHERE from_path = ? LIMIT 1').get(normalized);
+  const redir = getRedirectMap().get(normalized);
   if (redir) {
-    db.prepare('UPDATE redirects SET hits = hits + 1 WHERE id = ?').run(redir.id);
+    setImmediate(() => {
+      try {
+        stmtIncrementRedirectHit.run(redir.id);
+      } catch {}
+    });
     return res.redirect(redir.status_code === 302 ? 302 : 301, redir.to_path);
   }
   next();

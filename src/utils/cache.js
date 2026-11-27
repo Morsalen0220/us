@@ -4,6 +4,11 @@ const MAX_ENTRIES = 600;
 class MemoryCache {
   constructor() {
     this.store = new Map();
+    this.clearListeners = new Set();
+  }
+
+  onClear(fn) {
+    if (typeof fn === 'function') this.clearListeners.add(fn);
   }
 
   get(key) {
@@ -29,6 +34,11 @@ class MemoryCache {
 
   clear() {
     this.store.clear();
+    for (const fn of this.clearListeners) {
+      try {
+        fn();
+      } catch {}
+    }
   }
 
   size() {

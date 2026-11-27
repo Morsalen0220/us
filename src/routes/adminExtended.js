@@ -210,12 +210,14 @@ router.post('/seo-tools/redirects', verifyCsrf, (req, res) => {
     INSERT INTO redirects (from_path, to_path, status_code) VALUES (?, ?, ?)
     ON CONFLICT(from_path) DO UPDATE SET to_path = excluded.to_path, status_code = excluded.status_code
   `).run(fromPath, toPath, statusCode);
+  pageCache.clear();
 
   res.redirect('/admin/seo-tools?msg=Redirect+saved');
 });
 
 router.post('/seo-tools/redirects/:id/delete', verifyCsrf, (req, res) => {
   db.prepare('DELETE FROM redirects WHERE id = ?').run(req.params.id);
+  pageCache.clear();
   res.redirect('/admin/seo-tools?msg=Redirect+deleted');
 });
 
