@@ -59,11 +59,40 @@
   <meta name="msvalidate.01" content="<%= settings.bing_site_verification %>">
   <% } %>
 
+  <script>try{var t=localStorage.getItem('th_theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
   <link rel="preload" href="/css/style.css?v=26" as="style">
   <link rel="stylesheet" href="/css/style.css?v=26">
   <% if (seo.lcpImage) { %>
   <link rel="preload" as="image" href="<%= seo.lcpImage %>"<% if (seo.lcpImageSrcset) { %> imagesrcset="<%= seo.lcpImageSrcset %>" imagesizes="<%= seo.lcpImageSizes || '(max-width: 768px) 100vw, 760px' %>"<% } %> fetchpriority="high">
   <% } %>
+
+  <script type="speculationrules">
+  {
+    "prerender": [
+      {
+        "where": {
+          "and": [
+            { "href_matches": ["/article/*", "/category/*", "/region/*", "/tag/*", "/author/*", "/briefing*", "/ai-tools*", "/timelines*", "/videos*", "/"] },
+            { "not": { "selector_matches": "[rel~=nofollow], [target=_blank], [download]" } }
+          ]
+        },
+        "eagerness": "moderate"
+      }
+    ],
+    "prefetch": [
+      {
+        "where": {
+          "and": [
+            { "href_matches": "/*" },
+            { "not": { "href_matches": ["/admin*", "/api*", "/saved*", "/my-feed*", "/newsletter*", "/search*", "/contact*", "/health*", "/sitemap.xml", "/rss.xml", "/ads.txt"] } },
+            { "not": { "selector_matches": "[rel~=nofollow], [target=_blank], [download]" } }
+          ]
+        },
+        "eagerness": "moderate"
+      }
+    ]
+  }
+  </script>
 
   <% if (Array.isArray(jsonLdList)) { jsonLdList.forEach(function(schema) { %>
   <script type="application/ld+json"><%- schema %></script>

@@ -516,4 +516,59 @@
       });
     });
   }
+
+  // Instant Hover & Touch Prefetch fallback for browsers without Speculation Rules (Safari / iOS / Firefox)
+  const hasNativeSpeculation =
+    typeof HTMLScriptElement !== 'undefined' &&
+    typeof HTMLScriptElement.supports === 'function' &&
+    HTMLScriptElement.supports('speculationrules');
+
+  const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  const saveData = Boolean(conn && (conn.saveData || /2g/.test(conn.effectiveType || '')));
+
+  if (!hasNativeSpeculation && !saveData) {
+    const prefetched = new Set();
+    const BLOCKED_PREFIXES = ['/admin', '/api', '/saved', '/my-feed', '/newsletter', '/search', '/contact', '/health', '/sitemap.xml', '/rss.xml', '/ads.txt'];
+    let hoverTimer = null;
+
+    function maybePrefetch(anchor) {
+      if (!anchor || !anchor.href || prefetched.size >= 18) return;
+      if (anchor.target === '_blank' || anchor.hasAttribute('download') || (anchor.rel || '').includes('nofollow')) return;
+      let url;
+      try {
+        url = new URL(anchor.href, window.location.origin);
+      } catch {
+        return;
+      }
+      if (url.origin !== window.location.origin) return;
+      if (url.pathname === window.location.pathname && url.search === window.location.search) return;
+      if (BLOCKED_PREFIXES.some((p) => url.pathname === p || url.pathname.startsWith(p + '/') || url.pathname.startsWith(p + '?'))) return;
+
+      const key = url.pathname + url.search;
+      if (prefetched.has(key)) return;
+      prefetched.add(key);
+
+      const link = document.createElement('link');
+      link.rel = 'prefetch';
+      link.as = 'document';
+      link.href = key;
+      document.head.appendChild(link);
+    }
+
+    document.addEventListener('pointerover', (e) => {
+      const anchor = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+      if (!anchor) return;
+      clearTimeout(hoverTimer);
+      hoverTimer = setTimeout(() => maybePrefetch(anchor), 65);
+    }, { passive: true });
+
+    document.addEventListener('pointerout', () => {
+      if (hoverTimer) clearTimeout(hoverTimer);
+    }, { passive: true });
+
+    document.addEventListener('touchstart', (e) => {
+      const anchor = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+      if (anchor) maybePrefetch(anchor);
+    }, { passive: true });
+  }
 })();

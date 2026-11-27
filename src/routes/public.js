@@ -57,7 +57,7 @@ function withCache(ttlMs = CACHE_20M, contentType = 'text/html; charset=utf-8') 
     const hit = pageCache.get(cacheKey);
     if (hit !== null) {
       res.setHeader('X-Cache', 'HIT');
-      res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=86400, stale-while-revalidate=3600');
+      res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=86400, stale-while-revalidate=3600');
       res.type(contentType);
       return res.send(hit);
     }
@@ -66,7 +66,7 @@ function withCache(ttlMs = CACHE_20M, contentType = 'text/html; charset=utf-8') 
       if (res.statusCode === 200 && typeof body === 'string') {
         pageCache.set(cacheKey, body, ttlMs);
         res.setHeader('X-Cache', 'MISS');
-        res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=86400, stale-while-revalidate=3600');
+        res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=86400, stale-while-revalidate=3600');
       }
       return origSend(body);
     };
