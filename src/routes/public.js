@@ -128,6 +128,98 @@ function getPopularTags(limit = 16) {
   `).all(limit);
 }
 
+function formatShortBriefDate(dateStr) {
+  try {
+    const dt = new Date(`${String(dateStr).slice(0, 10)}T12:00:00Z`);
+    if (Number.isNaN(dt.getTime())) return dateStr;
+    return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+  } catch {
+    return dateStr;
+  }
+}
+
+function buildAutoBriefings() {
+  const manualRows = db.prepare(`
+    SELECT * FROM daily_briefings
+    WHERE status = 'published' AND title NOT LIKE 'Daily AI & US/EU Tech Briefing — %'
+    ORDER BY briefing_date DESC
+    LIMIT 10
+  `).all().map((b) => ({ ...b, items: safeJsonParse(b.items_json, []) }));
+
+  const recentPosts = db.prepare(`
+    SELECT p.title, p.slug, p.excerpt, p.published_at, p.created_at,
+           c.name AS category_name
+    FROM posts p
+    LEFT JOIN categories c ON c.id = p.category_id
+    WHERE p.status = 'published'
+    ORDER BY p.published_at DESC
+    LIMIT 35
+  `).all();
+
+  if (recentPosts.length === 0) {
+    return manualRows;
+  }
+
+  // Latest live edition always reflects the newest 5 published articles
+  const topFive = recentPosts.slice(0, 5);
+  const newestDate = String(topFive[0].published_at || topFive[0].created_at || new Date().toISOString()).slice(0, 10);
+  const prettyNewestDate = formatShortBriefDate(newestDate);
+  const topDesks = Array.from(new Set(topFive.map((p) => p.category_name || 'Tech').filter(Boolean))).slice(0, 3);
+  const liveEdition = {
+    id: 0,
+    slug: `edition-${newestDate}`,
+    briefing_date: newestDate,
+    pretty_date: prettyNewestDate,
+    title: `Daily AI & Tech Briefing — ${prettyNewestDate}`,
+    summary: `2-minute executive roundup across ${topDesks.join(', ')} — featuring "${topFive[0].title}" and ${Math.max(1, topFive.length - 1)} more verified updates.`,
+    items: topFive.map((p) => ({
+      tag: p.category_name || 'Tech',
+      headline: p.title,
+      summary: p.excerpt,
+      url: `/article/${p.slug}`
+    }))
+  };
+
+  // Group older articles by date for archive editions
+  const byDate = new Map();
+  for (const p of recentPosts.slice(5)) {
+    const d = String(p.published_at || p.created_at || '').slice(0, 10);
+    if (!d || d === newestDate) continue;
+    if (!byDate.has(d)) byDate.set(d, []);
+    if (byDate.get(d).length < 5) byDate.get(d).push(p);
+  }
+
+  const archiveAuto = [];
+  for (const [d, list] of byDate.entries()) {
+    if (archiveAuto.length >= 6) break;
+    const pretty = formatShortBriefDate(d);
+    const desks = Array.from(new Set(list.map((p) => p.category_name || 'Tech'))).slice(0, 3);
+    archiveAuto.push({
+      id: 0,
+      slug: `edition-${d}`,
+      briefing_date: d,
+      pretty_date: pretty,
+      title: `Daily AI & Tech Briefing — ${pretty}`,
+      summary: `Key highlights across ${desks.join(', ')}: ${list[0].title}.`,
+      items: list.map((p) => ({
+        tag: p.category_name || 'Tech',
+        headline: p.title,
+        summary: p.excerpt,
+        url: `/article/${p.slug}`
+      }))
+    });
+  }
+
+  const manualDates = new Set(manualRows.map((m) => m.briefing_date));
+  const combined = [
+    ...manualRows,
+    ...(manualDates.has(newestDate) ? [] : [liveEdition]),
+    ...archiveAuto.filter((a) => !manualDates.has(a.briefing_date))
+  ].sort((a, b) => String(b.briefing_date).localeCompare(String(a.briefing_date)));
+
+  return combined;
+}
+
 router.get('/', withCache(CACHE_20M), (req, res) => {
   setImmediate(() => recordPageView(req, null));
   const { settings, siteUrl } = res.locals;
@@ -184,9 +276,7 @@ router.get('/', withCache(CACHE_20M), (req, res) => {
     LIMIT 3
   `).all();
 
-  const latestBriefing = db.prepare(`
-    SELECT * FROM daily_briefings WHERE status = 'published' ORDER BY briefing_date DESC LIMIT 1
-  `).get();
+  const latestBriefing = buildAutoBriefings()[0] || null;
 
   const featuredTools = db.prepare(`
     SELECT * FROM ai_tools ORDER BY is_featured DESC, rating DESC LIMIT 4
@@ -211,7 +301,7 @@ router.get('/', withCache(CACHE_20M), (req, res) => {
     editorsPicks,
     reviewsPosts,
     howToGuides,
-    latestBriefing: latestBriefing ? { ...latestBriefing, items: safeJsonParse(latestBriefing.items_json, []) } : null,
+    latestBriefing,
     featuredTools,
     videoPosts,
     popularTags,
@@ -555,17 +645,14 @@ router.get('/region/:region', (req, res) => {
 
 router.get('/briefing', withCache(CACHE_20M), (req, res) => {
   const { settings, siteUrl } = res.locals;
-  const rows = db.prepare(`
-    SELECT * FROM daily_briefings WHERE status = 'published' ORDER BY briefing_date DESC LIMIT 20
-  `).all();
-  const briefings = rows.map((b) => ({ ...b, items: safeJsonParse(b.items_json, []) }));
+  const briefings = buildAutoBriefings();
   res.render('public/briefing', {
     briefings,
     activeBriefing: briefings[0] || null,
     trendingPosts: getTrendingPosts(5),
     seo: {
       title: `Daily AI & Tech Briefing — ${settings.site_name || 'TechHaven US'}`,
-      description: 'Concise daily executive summaries of breaking AI, US/Europe tech policy, and gaming developments.',
+      description: 'Concise 2-minute executive summaries of the latest AI, gadgets, software, cybersecurity, and gaming developments.',
       canonical: `${siteUrl}/briefing`,
       robots: 'index, follow'
     },
@@ -575,19 +662,22 @@ router.get('/briefing', withCache(CACHE_20M), (req, res) => {
 
 router.get('/briefing/:slug', withCache(CACHE_20M), (req, res) => {
   const { settings, siteUrl } = res.locals;
-  const row = db.prepare("SELECT * FROM daily_briefings WHERE slug = ? AND status = 'published' LIMIT 1").get(req.params.slug);
-  if (!row) {
-    return res.status(404).render('public/404', { seo: { title: 'Briefing Not Found', robots: 'noindex' } });
+  const briefings = buildAutoBriefings();
+  const found = briefings.find((b) => b.slug === req.params.slug);
+  if (!found) {
+    if (String(req.params.slug || '').startsWith('daily-briefing-')) {
+      return res.redirect(301, '/briefing');
+    }
+    return res.status(404).render('public/404', { seo: { title: 'Briefing Not Found', robots: 'noindex' }, jsonLdList: [] });
   }
-  const allRows = db.prepare("SELECT * FROM daily_briefings WHERE status = 'published' ORDER BY briefing_date DESC LIMIT 20").all();
   res.render('public/briefing', {
-    briefings: allRows.map((b) => ({ ...b, items: safeJsonParse(b.items_json, []) })),
-    activeBriefing: { ...row, items: safeJsonParse(row.items_json, []) },
+    briefings,
+    activeBriefing: found,
     trendingPosts: getTrendingPosts(5),
     seo: {
-      title: `${row.title} — ${settings.site_name || 'TechHaven US'}`,
-      description: row.summary,
-      canonical: `${siteUrl}/briefing/${row.slug}`,
+      title: `${found.title} — ${settings.site_name || 'TechHaven US'}`,
+      description: found.summary,
+      canonical: `${siteUrl}/briefing/${found.slug}`,
       robots: 'index, follow'
     },
     jsonLdList: []
@@ -1241,7 +1331,7 @@ router.get('/sitemap.xml', withCache(CACHE_15M, 'application/xml; charset=utf-8'
     aiTools,
     timelines,
     authors,
-    latestBriefingAt: latestBriefing?.created_at || ''
+    latestBriefingAt: latestBriefing?.created_at || posts[0]?.updated_at || posts[0]?.published_at || ''
   });
   res.type('application/xml; charset=utf-8').send(xml);
 });

@@ -70,6 +70,7 @@ export function collectUrlsForPostRecord(post, baseUrl) {
   const urls = [
     `${base}/`,
     `${base}/?page=1`,
+    `${base}/briefing`,
     `${base}/sitemap.xml`,
     `${base}/rss.xml`,
     `${base}/llms.txt`

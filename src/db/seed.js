@@ -780,64 +780,8 @@ const SEED_AI_TOOLS = [
 ];
 
 function seedBriefingsAndTimelines() {
-  const today = new Date().toISOString().slice(0, 10);
-  const yesterday = new Date(Date.now() - 86400_000).toISOString().slice(0, 10);
-
-  const briefingCount = db.prepare('SELECT COUNT(*) AS c FROM daily_briefings').get().c;
-  if (briefingCount === 0) {
-    const insertBriefing = db.prepare(`
-      INSERT INTO daily_briefings (title, slug, briefing_date, summary, items_json, status)
-      VALUES (?, ?, ?, ?, ?, 'published')
-    `);
-
-    insertBriefing.run(
-      `Daily AI & US/EU Tech Briefing — ${today}`,
-      `daily-briefing-${today}`,
-      today,
-      'Your 2-minute executive scan of autonomous AI agents, EU/US regulation milestones, Rockstar’s GTA roadmap, and speed optimization.',
-      JSON.stringify([
-        {
-          tag: 'AI Agents',
-          headline: 'Enterprises Shift Budgets From Chatbots to Audited AI Agents',
-          summary: 'US and European engineering leaders are prioritizing deterministic testing and sandboxed tool calls over raw benchmark scores.',
-          url: '/article/openai-google-gemini-2026-ai-agent-race-us-eu-tech'
-        },
-        {
-          tag: 'Gaming & GTA',
-          headline: 'GTA 6 RAGE 9 Details & GTA 5 Online PC BattlEye Updates',
-          summary: 'Rockstar continues expanding GTA Online across North America and Europe while targeting dense Vice City interiors for GTA 6.',
-          url: '/article/gta-6-gta-5-online-2026-roadmap-us-launch-pc-features'
-        },
-        {
-          tag: 'Policy',
-          headline: 'EU AI Act vs. US Privacy Mandates: What Publishers Must Do',
-          summary: 'Consent Mode v2, GDPR/CCPA disclosures, and transparent AI labeling remain essential for monetizing transatlantic traffic.',
-          url: '/article/eu-ai-act-vs-us-tech-regulation-2026-startups-guide'
-        }
-      ])
-    );
-
-    insertBriefing.run(
-      `Daily AI & US/EU Tech Briefing — ${yesterday}`,
-      `daily-briefing-${yesterday}`,
-      yesterday,
-      'Benchmarks on NVIDIA RTX 50-series vs. AMD RDNA 4, Core Web Vitals 100/100 WebP setups, and FIDO2 passkey rollouts.',
-      JSON.stringify([
-        {
-          tag: 'Reviews',
-          headline: 'RTX 50-Series vs. RDNA 4 Tested in 4K & Local LLM Inference',
-          summary: '16GB VRAM emerges as the sweet spot for builders balancing 4K gaming and local quantized AI models.',
-          url: '/article/nvidia-rtx-50-series-vs-amd-rdna-4-4k-gaming-ai-benchmarks'
-        },
-        {
-          tag: 'Performance',
-          headline: 'Cutting LCP Below 1.2s With Auto-WebP and SSR HTML',
-          summary: 'Automated Sharp WebP pipelines reduce image payloads by up to 90% with zero Cumulative Layout Shift.',
-          url: '/article/pass-core-web-vitals-100-lighthouse-speed-tutorial'
-        }
-      ])
-    );
-  }
+  // Remove legacy static demo briefings so live briefings auto-generate from real published articles
+  db.prepare("DELETE FROM daily_briefings WHERE title LIKE 'Daily AI & US/EU Tech Briefing — %'").run();
 
   const timelineCount = db.prepare('SELECT COUNT(*) AS c FROM timelines').get().c;
   if (timelineCount === 0) {
