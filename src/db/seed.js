@@ -902,59 +902,20 @@ export async function seedDatabase() {
     }
   }
 
-  // Ensure secondary editorial team members exist for multi-author workflow
-  const elenaExists = db.prepare('SELECT id FROM users WHERE slug = ?').get('elena-vance');
-  if (!elenaExists) {
-    db.prepare(`
-      INSERT INTO users (name, slug, email, password_hash, role, job_title, expertise, bio, twitter_handle, linkedin_url, location, credentials)
-      VALUES (?, ?, ?, ?, 'editor', ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      'Elena Vance',
-      'elena-vance',
-      'elena@techhavenus.com',
-      hashPassword(ADMIN_PASSWORD),
-      'Senior EU & US Policy Editor',
-      'EU AI Act, GDPR/CCPA Compliance, Cloud Security, Zero-Trust',
-      'Brussels and Washington correspondent covering transatlantic digital regulation, cybersecurity, and enterprise cloud compliance.',
-      '@elenavanceeu',
-      'https://www.linkedin.com/in/elenavanceeu',
-      'Brussels, Belgium / Washington, D.C.',
-      'M.Sc. Information Security • Certified CIPP/E & CIPP/US'
-    );
-  } else {
-    db.prepare(`
-      UPDATE users SET
-        location = CASE WHEN location = '' THEN 'Brussels, Belgium / Washington, D.C.' ELSE location END,
-        credentials = CASE WHEN credentials = '' THEN 'M.Sc. Information Security • Certified CIPP/E & CIPP/US' ELSE credentials END
-      WHERE slug = 'elena-vance'
-    `).run();
-  }
-
-  const marcusExists = db.prepare('SELECT id FROM users WHERE slug = ?').get('marcus-cole');
-  if (!marcusExists) {
-    db.prepare(`
-      INSERT INTO users (name, slug, email, password_hash, role, job_title, expertise, bio, twitter_handle, linkedin_url, location, credentials)
-      VALUES (?, ?, ?, ?, 'author', ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      'Marcus Cole',
-      'marcus-cole',
-      'marcus@techhavenus.com',
-      hashPassword(ADMIN_PASSWORD),
-      'Hardware & Gaming Analyst',
-      'GPUs, 4K Benchmarks, GTA 6 / PC Optimization, Consumer Gadgets',
-      'Austin-based hardware reviewer testing desktop GPUs, AI laptops, and open-world PC game optimization.',
-      '@marcuscolelab',
-      'https://www.linkedin.com/in/marcuscolelab',
-      'Austin, TX, USA',
-      'PC Hardware Lab Lead • 8+ years GPU & frame-time benchmarking'
-    );
-  } else {
-    db.prepare(`
-      UPDATE users SET
-        location = CASE WHEN location = '' THEN 'Austin, TX, USA' ELSE location END,
-        credentials = CASE WHEN credentials = '' THEN 'PC Hardware Lab Lead • 8+ years GPU & frame-time benchmarking' ELSE credentials END
-      WHERE slug = 'marcus-cole'
-    `).run();
+  // Remove legacy fictional demo authors (Elena Vance & Marcus Cole) and reassign any posts to primary author
+  const mainAdminRow = db.prepare('SELECT id, slug FROM users ORDER BY id ASC LIMIT 1').get();
+  for (const demoSlug of ['elena-vance', 'marcus-cole']) {
+    const demoUser = db.prepare('SELECT id FROM users WHERE slug = ?').get(demoSlug);
+    if (demoUser) {
+      if (mainAdminRow && mainAdminRow.id !== demoUser.id) {
+        db.prepare('UPDATE posts SET author_id = ? WHERE author_id = ?').run(mainAdminRow.id, demoUser.id);
+        db.prepare(`
+          INSERT INTO redirects (from_path, to_path, status_code) VALUES (?, ?, 301)
+          ON CONFLICT(from_path) DO UPDATE SET to_path = excluded.to_path, status_code = 301
+        `).run(`/author/${demoSlug}`, `/author/${mainAdminRow.slug}`);
+      }
+      db.prepare('DELETE FROM users WHERE id = ?').run(demoUser.id);
+    }
   }
 
   for (const [key, val] of Object.entries(DEFAULT_SETTINGS)) {

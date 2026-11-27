@@ -118,6 +118,12 @@
                       <button type="submit" class="btn btn-primary btn-sm">Save Author Profile</button>
                     </form>
                   </details>
+                  <% if (!currentUser || u.id !== currentUser.id) { %>
+                  <form action="/admin/users/<%= u.id %>/delete" method="POST" style="margin-top:0.4rem;" onsubmit="return confirm('Delete this author profile? Any articles by them will be reassigned to your account.');">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="btn btn-danger btn-sm">Delete Author</button>
+                  </form>
+                  <% } %>
                 </td>
               </tr>
               <% }) %>

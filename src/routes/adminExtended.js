@@ -127,6 +127,28 @@ router.post('/users/:id/role', requireRole('admin'), verifyCsrf, (req, res) => {
   res.redirect('/admin/users?msg=Author+profile+updated');
 });
 
+router.post('/users/:id/delete', requireRole('admin'), verifyCsrf, (req, res) => {
+  const id = Number.parseInt(req.params.id, 10);
+  if (id === req.user.id) {
+    return res.redirect('/admin/users?err=You+cannot+delete+your+own+logged-in+admin+account');
+  }
+  const target = db.prepare('SELECT id, slug FROM users WHERE id = ?').get(id);
+  if (!target) {
+    return res.redirect('/admin/users?err=Author+not+found');
+  }
+
+  db.prepare('UPDATE posts SET author_id = ? WHERE author_id = ?').run(req.user.id, target.id);
+  if (target.slug && req.user.slug && target.slug !== req.user.slug) {
+    db.prepare(`
+      INSERT INTO redirects (from_path, to_path, status_code) VALUES (?, ?, 301)
+      ON CONFLICT(from_path) DO UPDATE SET to_path = excluded.to_path, status_code = 301
+    `).run(`/author/${target.slug}`, `/author/${req.user.slug}`);
+  }
+  db.prepare('DELETE FROM users WHERE id = ?').run(target.id);
+  pageCache.clear();
+  return res.redirect('/admin/users?msg=Author+deleted+successfully');
+});
+
 // 2. Editorial Calendar & Approval Queue
 router.get('/calendar', (req, res) => {
   const posts = db.prepare(`
