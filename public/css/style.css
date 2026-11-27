@@ -773,7 +773,7 @@ img {
   grid-column: 1 / -1;
   grid-row: 2;
   width: 100%;
-  max-width: 760px;
+  max-width: 950px;
   margin: 2.15rem auto 2.35rem;
   min-width: 0;
 }
