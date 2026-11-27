@@ -15,7 +15,8 @@
   --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
   --shadow-md: 0 10px 28px -8px rgba(15, 23, 42, 0.09);
   --radius: 12px;
-  --container: 1240px;
+  --header-container: 1260px;
+  --container: 1040px;
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
@@ -85,6 +86,12 @@ img {
   max-width: var(--container);
   margin: 0 auto;
   padding: 0 1.25rem;
+}
+
+.topbar > .container,
+.breaking-bar > .container,
+.site-header > .container {
+  max-width: var(--header-container);
 }
 
 .sr-only {
@@ -737,19 +744,19 @@ img {
 /* Two-Column Content Layout */
 .layout-split {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 336px;
-  gap: 2rem;
+  grid-template-columns: minmax(0, 1fr) 312px;
+  gap: 1.75rem;
   align-items: start;
 }
 
 /* TechRadar-Style 3-Zone Article Layout:
    1. Top Split: Lead (Header + Hero + What's New + Key Takeaways) + Right Sidebar
-   2. Middle Reading Column: Centered 760px column with generous left/right whitespace
+   2. Middle Reading Column: Centered 900px column with generous left/right whitespace
    3. Bottom Full-Width: AI Assistant, Sources, Author Bio, and Related Stories */
 .article-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 336px;
-  column-gap: 2.25rem;
+  grid-template-columns: minmax(0, 1fr) 312px;
+  column-gap: 1.85rem;
   align-items: start;
 }
 
@@ -766,14 +773,14 @@ img {
 .article-layout > .sidebar {
   grid-column: 2;
   grid-row: 1;
-  width: 336px;
+  width: 312px;
 }
 
 .article-body-center {
   grid-column: 1 / -1;
   grid-row: 2;
   width: 100%;
-  max-width: 950px;
+  max-width: 900px;
   margin: 2.15rem auto 2.35rem;
   min-width: 0;
 }
