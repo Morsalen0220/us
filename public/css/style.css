@@ -2576,3 +2576,11 @@ img {
   gap: 0.5rem;
   flex-wrap: wrap;
 }
+
+/* Offscreen Layout Optimization for Faster Mobile Paint & Scroll */
+.ai-today-band,
+.digest-banner,
+.site-footer {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 420px;
+}

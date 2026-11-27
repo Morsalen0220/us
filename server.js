@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import path from 'node:path';
 import express from 'express';
 import compression from 'compression';
 import helmet from 'helmet';
@@ -18,6 +19,9 @@ const app = express();
 app.set('trust proxy', 1);
 app.set('view engine', 'ejs');
 app.set('views', VIEWS_DIR);
+if (NODE_ENV !== 'test') {
+  app.set('view cache', true);
+}
 app.disable('x-powered-by');
 
 app.use(compression({ threshold: 512 }));
@@ -39,10 +43,41 @@ app.use(
   })
 );
 
+const STYLE_CSS_PATH = path.join(PUBLIC_DIR, 'css', 'style.css');
+let cachedMinifiedCss = '';
+let cachedCssMtime = 0;
+
+app.get('/css/style.css', (req, res, next) => {
+  try {
+    const stat = fs.statSync(STYLE_CSS_PATH);
+    if (!cachedMinifiedCss || stat.mtimeMs !== cachedCssMtime) {
+      const rawCss = fs.readFileSync(STYLE_CSS_PATH, 'utf8');
+      cachedMinifiedCss = rawCss
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/\s+/g, ' ')
+        .replace(/\s*([{};,])\s*/g, '$1')
+        .replace(/:\s+/g, ':')
+        .replace(/;\}/g, '}')
+        .trim();
+      cachedCssMtime = stat.mtimeMs;
+    }
+    res.setHeader('Content-Type', 'text/css; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    return res.send(cachedMinifiedCss);
+  } catch {
+    return next();
+  }
+});
+
 app.use(
   express.static(PUBLIC_DIR, {
-    maxAge: NODE_ENV === 'production' ? '365d' : '0',
-    immutable: NODE_ENV === 'production'
+    maxAge: '365d',
+    immutable: true,
+    setHeaders(res, filePath) {
+      if (filePath.endsWith('sw.js')) {
+        res.setHeader('Cache-Control', 'no-cache');
+      }
+    }
   })
 );
 

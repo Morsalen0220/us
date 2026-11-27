@@ -60,8 +60,8 @@
   <% } %>
 
   <script>try{var t=localStorage.getItem('th_theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
-  <link rel="preload" href="/css/style.css?v=26" as="style">
-  <link rel="stylesheet" href="/css/style.css?v=26">
+  <link rel="preload" href="/css/style.css?v=27" as="style">
+  <link rel="stylesheet" href="/css/style.css?v=27">
   <% if (seo.lcpImage) { %>
   <link rel="preload" as="image" href="<%= seo.lcpImage %>"<% if (seo.lcpImageSrcset) { %> imagesrcset="<%= seo.lcpImageSrcset %>" imagesizes="<%= seo.lcpImageSizes || '(max-width: 768px) 100vw, 760px' %>"<% } %> fetchpriority="high">
   <% } %>
@@ -98,7 +98,10 @@
   <script type="application/ld+json"><%- schema %></script>
   <% }); } %>
 
-  <% if (settings.ga_measurement_id) { %>
+  <% const hasGa = Boolean(settings.ga_measurement_id); %>
+  <% const hasAdsense = Boolean(settings.ads_slots_visible === '1' && settings.ads_enabled === '1' && settings.adsense_publisher_id); %>
+  <% if (hasGa) { %>
+  <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
@@ -108,15 +111,44 @@
       ad_personalization: 'denied',
       analytics_storage: 'granted'
     });
-  </script>
-  <script async src="https://www.googletagmanager.com/gtag/js?id=<%= settings.ga_measurement_id %>"></script>
-  <script>
     gtag('js', new Date());
     gtag('config', '<%= settings.ga_measurement_id %>');
   </script>
   <% } %>
-
-  <% if (settings.ads_slots_visible === '1' && settings.ads_enabled === '1' && settings.adsense_publisher_id) { %>
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=<%= settings.adsense_publisher_id %>" crossorigin="anonymous"></script>
+  <% if (hasAdsense) { %>
+  <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com">
+  <% } %>
+  <% if (hasGa || hasAdsense) { %>
+  <script>
+    (function () {
+      var loaded = false;
+      function loadThirdParty() {
+        if (loaded) return;
+        loaded = true;
+        ['scroll', 'pointerdown', 'mousemove', 'touchstart', 'keydown'].forEach(function (ev) {
+          window.removeEventListener(ev, loadThirdParty, { passive: true });
+        });
+        <% if (hasGa) { %>
+        var gs = document.createElement('script');
+        gs.async = true;
+        gs.src = 'https://www.googletagmanager.com/gtag/js?id=<%= settings.ga_measurement_id %>';
+        document.head.appendChild(gs);
+        <% } %>
+        <% if (hasAdsense) { %>
+        var as = document.createElement('script');
+        as.async = true;
+        as.crossOrigin = 'anonymous';
+        as.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=<%= settings.adsense_publisher_id %>';
+        document.head.appendChild(as);
+        <% } %>
+      }
+      ['scroll', 'pointerdown', 'mousemove', 'touchstart', 'keydown'].forEach(function (ev) {
+        window.addEventListener(ev, loadThirdParty, { passive: true, once: true });
+      });
+      window.addEventListener('load', function () {
+        setTimeout(loadThirdParty, 3200);
+      }, { once: true });
+    })();
+  </script>
   <% } %>
 </head>
