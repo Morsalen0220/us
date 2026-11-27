@@ -89,8 +89,7 @@ img {
 }
 
 .topbar > .container,
-.breaking-bar > .container,
-.site-header > .container {
+.breaking-bar > .container {
   max-width: var(--header-container);
 }
 
@@ -203,7 +202,7 @@ img {
 }
 
 .brand-logo-img {
-  height: 44px;
+  height: 38px;
   width: auto;
   display: block;
   object-fit: contain;
@@ -292,9 +291,9 @@ img {
 }
 
 .nav-desktop .nav-link {
-  padding: 0.34rem 0.58rem;
+  padding: 0.32rem 0.46rem;
   border-radius: 7px;
-  font-size: 0.83rem;
+  font-size: 0.8rem;
   font-weight: 650;
   color: var(--text-muted);
   white-space: nowrap;
